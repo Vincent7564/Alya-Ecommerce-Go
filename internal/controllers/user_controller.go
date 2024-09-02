@@ -45,7 +45,7 @@ func (uc *UserController) RegisterUsers(w http.ResponseWriter, r *http.Request) 
 	}
 	response := Response{
 		StatusCode: 200,
-		Message:    "Success",
+		Message:    "Successs",
 	}
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
