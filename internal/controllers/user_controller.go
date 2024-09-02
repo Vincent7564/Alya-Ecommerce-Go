@@ -1,13 +1,11 @@
 package controllers
 
 import (
+	user_service "Alya-Ecommerce-Go/internal/services"
 	"encoding/json"
 	"net/http"
 	"time"
 
-	"services/user_service"
-
-	"github.com/supabase-community/supabase-go"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -15,12 +13,12 @@ type UserController struct {
 	Service *user_service.UserService
 }
 
-func NewUserController(client *supabase.Client) *UserController {
-	return &UserController{Client: client}
+func NewUserController(client *user_service.UserService) *UserController {
+	return &UserController{Service: client}
 }
 
 func (uc *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
-	data, _, err := uc.Client.From("users").Select("*", "exact", false).Execute()
+	data, _, err := uc.Service.Client.From("users").Select("*", "exact", false).Execute()
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
@@ -61,7 +59,7 @@ func (uc *UserController) RegisterUsers(w http.ResponseWriter, r *http.Request) 
 
 	t := time.Now()
 
-	data, _, err := uc.Client.From("users").Insert(map[string]interface{}{
+	data, _, err := uc.Service.Client.From("users").Insert(map[string]interface{}{
 		"username":     user.Username,
 		"password":     string(hashPassword),
 		"full_name":    user.Fullname,

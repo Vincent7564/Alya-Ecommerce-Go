@@ -4,6 +4,7 @@ import (
 	"log"
 
 	"Alya-Ecommerce-Go/internal/controllers"
+	user_service "Alya-Ecommerce-Go/internal/services"
 	"os"
 
 	"github.com/gorilla/mux"
@@ -23,9 +24,9 @@ func SetupRouter() *mux.Router {
 	if err != nil {
 		log.Fatalf("Failed to create Supabase client: %v", err)
 	}
-
+	userService := user_service.NewUserService(client)
 	// Pass the Supabase client to the controller
-	userController := controllers.NewUserController(client)
+	userController := controllers.NewUserController(userService)
 
 	// Define your routes and handlers
 	router.HandleFunc("/users", userController.GetUsers).Methods("GET")
