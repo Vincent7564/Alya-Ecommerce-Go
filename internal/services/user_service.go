@@ -1,14 +1,22 @@
-package services
+package user_service
 
 import (
-	"go-rest-api/internal/models"
-	"go-rest-api/internal/repositories"
+	"github.com/supabase-community/supabase-go"
 )
 
-func GetAllUsers() ([]models.User, error) {
-	return repositories.FindAllUsers()
+type UserService struct {
+	Client *supabase.Client
 }
 
-func GetUserByID(id string) (models.User, error) {
-	return repositories.FindUserByID(id)
+func NewUserService(client *supabase.Client) *UserService {
+	return &UserService{Client: client}
+}
+
+func (us *UserService) ValidateToken(token string) (bool, error) {
+	data := us.Client.From("user_token").
+		Select("*", "exact", false).
+		Eq("token", token).
+		Eq("is_active", "1").Single()
+
+	return data != nil, nil
 }

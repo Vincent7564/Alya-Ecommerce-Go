@@ -5,12 +5,14 @@ import (
 	"net/http"
 	"time"
 
+	"services/user_service"
+
 	"github.com/supabase-community/supabase-go"
 	"golang.org/x/crypto/bcrypt"
 )
 
 type UserController struct {
-	Client *supabase.Client
+	Service *user_service.UserService
 }
 
 func NewUserController(client *supabase.Client) *UserController {
@@ -18,14 +20,12 @@ func NewUserController(client *supabase.Client) *UserController {
 }
 
 func (uc *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
-	// Fetch data from Supabase
 	data, _, err := uc.Client.From("users").Select("*", "exact", false).Execute()
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 		return
 	}
 
-	// Respond with the fetched data
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(data)
 }
