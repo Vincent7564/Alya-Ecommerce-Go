@@ -4,6 +4,7 @@ import (
 	user_service "Alya-Ecommerce-Go/internal/services"
 	"encoding/json"
 	"net/http"
+	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -29,6 +30,22 @@ func (uc *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
 }
 
 func (uc *UserController) RegisterUsers(w http.ResponseWriter, r *http.Request) {
+
+	token := r.Header.Get("Authorization")
+
+	if token == "" || !strings.HasPrefix(token, "Bearer ") {
+		http.Error(w, "Unauthorized - No token provided", http.StatusUnauthorized)
+		return
+	}
+
+	token = strings.TrimPrefix(token, "Bearer ")
+	// fmt.Print(token)
+	is_active, errs := uc.Service.ValidateToken(token)
+	// fmt.Print(is_active)
+	if errs != nil || !is_active {
+		http.Error(w, "Unauthorized - Token Expired or Invalid, Please Relogin", http.StatusUnauthorized)
+		return
+	}
 	var user struct {
 		Username    string `json:"username"`
 		Password    string `json:"password"`
@@ -45,6 +62,7 @@ func (uc *UserController) RegisterUsers(w http.ResponseWriter, r *http.Request) 
 		StatusCode: 200,
 		Message:    "Successs",
 	}
+
 	err := json.NewDecoder(r.Body).Decode(&user)
 	if err != nil {
 		http.Error(w, "Invalid Request, Please Check", http.StatusBadRequest)
