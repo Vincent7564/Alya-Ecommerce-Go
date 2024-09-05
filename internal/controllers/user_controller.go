@@ -3,8 +3,8 @@ package controllers
 import (
 	user_service "Alya-Ecommerce-Go/internal/services"
 	"encoding/json"
+	"fmt"
 	"net/http"
-	"strings"
 	"time"
 
 	"golang.org/x/crypto/bcrypt"
@@ -29,23 +29,64 @@ func (uc *UserController) GetUsers(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(data)
 }
 
+func (uc *UserController) AuthLogin(w http.ResponseWriter, r *http.Request) {
+	var users struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	var user_db struct {
+		Username string `json:"username"`
+		Password string `json:"password"`
+	}
+	data, _, err := uc.Service.Client.From("users").
+		Select("username, password", "exact", false).
+		Eq("username", users.Username).Execute()
+
+	if err := json.Unmarshal(data, &user_db); err != nil {
+		fmt.Printf("Error unmarshalling token data: %v\n", err)
+	}
+	if err != nil {
+		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
+	}
+	err_compare := bcrypt.CompareHashAndPassword([]byte(user_db.Password), []byte(users.Password))
+
+	if err_compare != nil {
+		http.Error(w, "Invalid password", http.StatusUnauthorized)
+		return
+	}
+
+	type Response struct {
+		StatusCode int
+		Message    string
+	}
+
+	response := Response{
+		StatusCode: 200,
+		Message:    "Successs",
+	}
+
+	json.NewEncoder(w).Encode(response)
+}
+
 func (uc *UserController) RegisterUsers(w http.ResponseWriter, r *http.Request) {
 
-	token := r.Header.Get("Authorization")
+	// Code For Checking Auth
+	// token := r.Header.Get("Authorization")
 
-	if token == "" || !strings.HasPrefix(token, "Bearer ") {
-		http.Error(w, "Unauthorized - No token provided", http.StatusUnauthorized)
-		return
-	}
+	// if token == "" || !strings.HasPrefix(token, "Bearer ") {
+	// 	http.Error(w, "Unauthorized - No token provided", http.StatusUnauthorized)
+	// 	return
+	// }
 
-	token = strings.TrimPrefix(token, "Bearer ")
-	// fmt.Print(token)
-	is_active, errs := uc.Service.ValidateToken(token)
-	// fmt.Print(is_active)
-	if errs != nil || !is_active {
-		http.Error(w, "Unauthorized - Token Expired or Invalid, Please Relogin", http.StatusUnauthorized)
-		return
-	}
+	// token = strings.TrimPrefix(token, "Bearer ")
+	// // fmt.Print(token)
+	// is_active, errs := uc.Service.ValidateToken(token)
+	// // fmt.Print(is_active)
+	// if errs != nil || !is_active {
+	// 	http.Error(w, "Unauthorized - Token Expired or Invalid, Please Relogin", http.StatusUnauthorized)
+	// 	return
+	// }
+
 	var user struct {
 		Username    string `json:"username"`
 		Password    string `json:"password"`
