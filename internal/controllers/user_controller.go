@@ -14,6 +14,11 @@ type UserController struct {
 	Service *user_service.UserService
 }
 
+type User struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
 func NewUserController(client *user_service.UserService) *UserController {
 	return &UserController{Service: client}
 }
@@ -34,21 +39,30 @@ func (uc *UserController) AuthLogin(w http.ResponseWriter, r *http.Request) {
 		Username string `json:"username"`
 		Password string `json:"password"`
 	}
-	var user_db struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
+	// var user_db struct {
+	// 	Username string `json:"username"`
+	// 	Password string `json:"password"`
+	// }
+
+	err := json.NewDecoder(r.Body).Decode(&users)
+	if err != nil {
+		http.Error(w, "Invalid input", http.StatusBadRequest)
+		return
 	}
 	data, _, err := uc.Service.Client.From("users").
 		Select("username, password", "exact", false).
 		Eq("username", users.Username).Execute()
 
-	if err := json.Unmarshal(data, &user_db); err != nil {
+	var userss []User
+
+	if err := json.Unmarshal(data, &userss); err != nil {
 		fmt.Printf("Error unmarshalling token data: %v\n", err)
 	}
+
 	if err != nil {
 		http.Error(w, "Failed to fetch users", http.StatusInternalServerError)
 	}
-	err_compare := bcrypt.CompareHashAndPassword([]byte(user_db.Password), []byte(users.Password))
+	err_compare := bcrypt.CompareHashAndPassword([]byte(userss[0].Password), []byte(users.Password))
 
 	if err_compare != nil {
 		http.Error(w, "Invalid password", http.StatusUnauthorized)

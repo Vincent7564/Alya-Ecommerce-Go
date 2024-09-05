@@ -31,5 +31,6 @@ func SetupRouter() *mux.Router {
 	// Define your routes and handlers
 	router.HandleFunc("/users", userController.GetUsers).Methods("GET")
 	router.HandleFunc("/register-users", userController.RegisterUsers).Methods("POST")
+	router.HandleFunc("/auth-login", userController.AuthLogin).Methods("POST")
 	return router
 }
