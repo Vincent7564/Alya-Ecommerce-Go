@@ -19,6 +19,10 @@ type User struct {
 	Password string `json:"password"`
 }
 
+func enableCors(w *http.ResponseWriter) {
+	(*w).Header().Set("Access-Control-Allow-Origin", "*")
+}
+
 func NewUserController(client *user_service.UserService) *UserController {
 	return &UserController{Service: client}
 }
@@ -100,7 +104,7 @@ func (uc *UserController) RegisterUsers(w http.ResponseWriter, r *http.Request) 
 	// 	http.Error(w, "Unauthorized - Token Expired or Invalid, Please Relogin", http.StatusUnauthorized)
 	// 	return
 	// }
-
+	enableCors(&w)
 	var user struct {
 		Username    string `json:"username"`
 		Password    string `json:"password"`

@@ -5,6 +5,7 @@ go 1.23.0
 require (
 	github.com/gorilla/mux v1.8.1
 	github.com/joho/godotenv v1.5.1
+	github.com/rs/cors v1.11.1
 	github.com/supabase-community/supabase-go v0.0.4
 	golang.org/x/crypto v0.26.0
 )
