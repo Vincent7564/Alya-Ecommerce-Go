@@ -15,7 +15,7 @@ type Router struct {
 func (r *Router) Init() {
 	controller := controller.Controller{Client: r.Client}
 
-	UserRoutes(r.App, controller)
+	AuthRoutes(r.App, controller)
 
 }
 
