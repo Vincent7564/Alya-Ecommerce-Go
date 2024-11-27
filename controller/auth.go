@@ -2,6 +2,7 @@ package controller
 
 import (
 	"Alya-Ecommerce-Go/model/dto"
+	"Alya-Ecommerce-Go/model/entity"
 	util "Alya-Ecommerce-Go/utils"
 	"net/http"
 	"os"
@@ -51,7 +52,7 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 	var request dto.LoginRequest
 	err := ctx.BodyParser(&request)
 
-	var getData dto.InsertUserRequest
+	var getData entity.UserEntity
 
 	if err != nil {
 		return util.GenerateResponse(ctx, http.StatusBadGateway, "Invalid Request", err.Error())
@@ -60,7 +61,7 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 		return util.GenerateResponse(ctx, http.StatusBadGateway, "Validate Error", errorMessage)
 	}
 
-	count, err := c.Client.From("users").Select("*", "", false).Eq("username", request.Username).ExecuteTo(&getData)
+	count, err := c.Client.From("users").Select("*", "", false).Eq("username", request.Username).Single().ExecuteTo(&getData)
 
 	if err != nil && count == 0 {
 		return util.GenerateResponse(ctx, http.StatusNotFound, "Account Not Found", err.Error())
@@ -72,7 +73,7 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 		claims := jwt.MapClaims{
 			"username": getData.Username,
 			"email":    getData.Email,
-			"exp":      time.Now().Add(time.Hour * 3).Unix(),
+			"exp":      time.Now().Add(time.Hour * 12).Unix(),
 		}
 
 		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
@@ -82,13 +83,14 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 		if err != nil {
 			return util.GenerateResponse(ctx, http.StatusInternalServerError, "Failed to Sign Token", err)
 		}
-
+		timeNow := time.Now().UTC()
+		expiredTime := time.Now().Add(time.Hour * 12)
 		data, _, err := c.Client.From("users_token").Insert(map[string]interface{}{
 			"users_id":   getData.ID,
 			"token":      t,
 			"is_active":  true,
-			"created_at": time.Now(),
-			"expires_at": time.Now().Add(time.Hour * 12),
+			"created_at": timeNow,
+			"expires_at": expiredTime,
 		}, false, "", "", "").Execute()
 
 		if err != nil {

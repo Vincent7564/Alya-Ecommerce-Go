@@ -15,7 +15,7 @@ type PaginateData struct {
 }
 
 type Response struct {
-	Message  string
+	Message  string        `json:"message"`
 	Data     interface{}   `json:"data"`
 	Paginate *PaginateData `json:"paginate,omitempty"`
 }
