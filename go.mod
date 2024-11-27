@@ -5,6 +5,8 @@ go 1.23.0
 require (
 	github.com/go-playground/validator/v10 v10.23.0
 	github.com/gofiber/fiber/v2 v2.52.5
+	github.com/golang-jwt/jwt v3.2.2+incompatible
+	github.com/golang-jwt/jwt/v5 v5.2.1
 	github.com/joho/godotenv v1.5.1
 	github.com/supabase-community/supabase-go v0.0.4
 	golang.org/x/crypto v0.26.0
