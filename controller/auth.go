@@ -170,3 +170,33 @@ func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 		return util.GenerateResponse(ctx, http.StatusOK, "Success", "")
 	}
 }
+
+func (c *Controller) CheckForgotPasswordToken(ctx *fiber.Ctx) error {
+	var request dto.ForgotPasswordTokenRequest
+	var getData entity.ResetPasswordToken
+	err := ctx.BodyParser(&request)
+
+	if err != nil {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Invalid Request", err.Error())
+	}
+
+	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Validation Error", errorMessage)
+	}
+
+	count, err := c.Client.From("reset_password_token").Select("*", "", false).Eq("reset_password_token", request.Token).Single().ExecuteTo(&getData)
+
+	if err != nil {
+		return util.GenerateResponse(ctx, http.StatusInternalServerError, "Internal Server Error", err.Error())
+	}
+
+	if count == 0 {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "No Token Found", count)
+	}
+
+	if getData.ExpiredAt.Before(time.Now()) {
+		return util.GenerateResponse(ctx, http.StatusUnauthorized, "Token Expired", nil)
+	}
+
+	return util.GenerateResponse(ctx, http.StatusOK, "Token Active", nil)
+}

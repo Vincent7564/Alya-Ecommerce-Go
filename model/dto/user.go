@@ -24,3 +24,7 @@ type ForgotPasswordRequest struct {
 	Email    string `json:"email" validate:"omitempty,required"`
 	Username string `json:"username" validate:"omitempty,required"`
 }
+
+type ForgotPasswordTokenRequest struct {
+	Token string `json:"token" validate:"required"`
+}
