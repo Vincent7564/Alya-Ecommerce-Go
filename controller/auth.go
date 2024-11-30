@@ -4,8 +4,10 @@ import (
 	"Alya-Ecommerce-Go/model/dto"
 	"Alya-Ecommerce-Go/model/entity"
 	util "Alya-Ecommerce-Go/utils"
+	"bytes"
 	"net/http"
 	"os"
+	"text/template"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -104,4 +106,67 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 		return util.GenerateResponse(ctx, http.StatusOK, "Login Success", t)
 	}
 	return util.GenerateResponse(ctx, http.StatusBadGateway, "Login Failed", "")
+}
+
+func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
+	var request dto.ForgotPasswordRequest
+	var getData entity.UserEntity
+	type data struct {
+		Token       string
+		ExpiredDate string
+	}
+
+	err := ctx.BodyParser(&request)
+	if err != nil {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Invalid Request", err.Error())
+	}
+
+	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Validation Error!", errorMessage)
+	}
+
+	count, err := c.Client.From("users").Select("*", "", false).Eq("email", request.Email).Single().ExecuteTo(&getData)
+
+	if err != nil && count == 0 {
+		return util.GenerateResponse(ctx, http.StatusNotFound, "Account Not Found", err.Error())
+	}
+
+	if token, err := util.GenerateRandomToken(); err != nil {
+		return util.GenerateResponse(ctx, http.StatusInternalServerError, "Failed to generate token", err.Error())
+	} else {
+		d := data{}
+		var tempTime = time.Now().Add(time.Minute * 30)
+		d.Token = token
+		d.ExpiredDate = tempTime.Format("03:04PM 2 January 2006")
+
+		data, _, err := c.Client.From("reset_password_tokens").Insert(map[string]interface{}{
+			"username":             getData.Username,
+			"email":                getData.Email,
+			"reset_password_token": d.Token,
+			"created_at":           time.Now(),
+			"expired_at":           d.ExpiredDate,
+		}, false, "", "", "").Execute()
+
+		if err != nil {
+			return util.GenerateResponse(ctx, http.StatusBadGateway, "Failed to insert token", err.Error())
+		}
+		if data == nil {
+			return util.GenerateResponse(ctx, http.StatusInternalServerError, "No Data Return", data)
+		}
+
+		tmpl, err := template.ParseFiles("utils/ForgotPassword.html")
+
+		if err != nil {
+			return util.GenerateResponse(ctx, http.StatusFailedDependency, "Failed Parse Template", err.Error())
+		}
+
+		var body bytes.Buffer
+		if err := tmpl.Execute(&body, d); err != nil {
+			return util.GenerateResponse(ctx, http.StatusFailedDependency, "Failed to execute template", err.Error())
+		}
+
+		util.SendEmail(getData.Email, "Forget password email for Alya Ecommerce Shop", body.String())
+
+		return util.GenerateResponse(ctx, http.StatusOK, "Success", "")
+	}
 }

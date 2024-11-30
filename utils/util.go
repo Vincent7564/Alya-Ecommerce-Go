@@ -1,11 +1,15 @@
 package util
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"os"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"golang.org/x/crypto/bcrypt"
+	"gopkg.in/gomail.v2"
 )
 
 type PaginateData struct {
@@ -93,4 +97,33 @@ func HashPassword(password string) (string, error) {
 func CheckPasswordHash(password, hash string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hash), []byte(password))
 	return err == nil
+}
+
+func GenerateRandomToken() (string, error) {
+	bytes := make([]byte, 32)
+	if _, err := rand.Read(bytes); err != nil {
+		return "", fmt.Errorf("failed to generate token: %w", err)
+	}
+	return hex.EncodeToString(bytes), nil
+}
+
+func SendEmail(to string, subject string, content string) error {
+	m := gomail.NewMessage()
+	email := os.Getenv("USER_EMAIL")
+	port := 587
+	password := os.Getenv("USER_PASSWORD")
+	if email == "" || password == "" {
+		return fmt.Errorf("email credentials not set in environment variables")
+	}
+	m.SetHeader("From", email)
+	m.SetHeader("To", to)
+	m.SetHeader("Subject", subject)
+	m.SetBody("text/html", content)
+
+	d := gomail.NewDialer("smtp.gmail.com", port, email, password)
+
+	if err := d.DialAndSend(m); err != nil {
+		return fmt.Errorf("failed to send email: %w", err)
+	}
+	return nil
 }
