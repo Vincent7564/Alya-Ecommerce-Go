@@ -25,14 +25,18 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 
 	count, err := c.Client.From("users").Select("*", "", false).Eq("email", user.Email).Single().ExecuteTo(&getData)
 
-	return util.GenerateResponse(ctx, http.StatusOK, string(count), getData)
-
 	if count != 0 {
 		return util.GenerateResponse(ctx, http.StatusBadGateway, "Data already existed", err.Error())
 	}
 
 	if getData.Email != "" {
 		return util.GenerateResponse(ctx, http.StatusBadGateway, "Email existed", "")
+	}
+
+	counter, err := c.Client.From("users").Select("*", "", false).Eq("username", user.Username).Single().ExecuteTo(&getData)
+
+	if counter != 0 {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Data already existed", err.Error())
 	}
 
 	if getData.Username != "" {
