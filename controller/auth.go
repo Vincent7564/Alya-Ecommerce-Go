@@ -25,6 +25,8 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 
 	count, err := c.Client.From("users").Select("*", "", false).Eq("email", user.Email).Single().ExecuteTo(&getData)
 
+	return util.GenerateResponse(ctx, http.StatusOK, string(count), getData)
+
 	if count != 0 {
 		return util.GenerateResponse(ctx, http.StatusBadGateway, "Data already existed", err.Error())
 	}
@@ -120,7 +122,7 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 
 		return util.GenerateResponse(ctx, http.StatusOK, "Login Success", t)
 	}
-	return util.GenerateResponse(ctx, http.StatusBadGateway, "Login Failed", "")
+	return util.GenerateResponse(ctx, http.StatusBadGateway, "Incorrect Password", "")
 }
 
 func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
