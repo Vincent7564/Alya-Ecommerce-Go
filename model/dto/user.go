@@ -28,3 +28,8 @@ type ForgotPasswordRequest struct {
 type ForgotPasswordTokenRequest struct {
 	Token string `json:"token" validate:"required"`
 }
+
+type ResetPasswordRequest struct {
+	Token    string `json:"token" validate:"required"`
+	Password string `json:"password" validate:"required,gte=8,lte=30"`
+}

@@ -200,3 +200,44 @@ func (c *Controller) CheckForgotPasswordToken(ctx *fiber.Ctx) error {
 
 	return util.GenerateResponse(ctx, http.StatusOK, "Token Active", nil)
 }
+
+func (c *Controller) ResetPassword(ctx *fiber.Ctx) error {
+	var request dto.ResetPasswordRequest
+	var getData entity.ResetPasswordToken
+	err := ctx.BodyParser(&request)
+
+	if err != nil {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Invalid Request", err.Error())
+	}
+
+	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		return util.GenerateResponse(ctx, http.StatusInternalServerError, "Validation Error", errorMessage)
+	}
+
+	count, err := c.Client.From("reset_password_tokens").Select("1", "", false).Eq("reset_password_token", request.Token).Single().ExecuteTo(&getData)
+
+	if err != nil && count == 0 {
+		return util.GenerateResponse(ctx, http.StatusNotFound, "Token not found or expired!", err.Error())
+	}
+
+	if getData.ExpiredAt.Before(time.Now()) {
+		return util.GenerateResponse(ctx, http.StatusUnauthorized, "Token Expired", nil)
+	}
+	hashPassword, _ := util.HashPassword(request.Password)
+
+	data, _, err := c.Client.From("users").Update(map[string]interface{}{
+		"password":   string(hashPassword),
+		"updated_at": time.Now(),
+		"updated_by": getData.Email,
+	}, "", "").Eq("email", getData.Email).Single().Execute()
+
+	if err != nil {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Failed to update", err.Error())
+	}
+
+	if data == nil {
+		return util.GenerateResponse(ctx, http.StatusInternalServerError, "No data returned", err.Error())
+	}
+
+	return util.GenerateResponse(ctx, http.StatusOK, "Succes", "")
+}
