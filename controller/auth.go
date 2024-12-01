@@ -16,10 +16,25 @@ import (
 
 func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 	var user dto.InsertUserRequest
+	var getData entity.UserEntity
 	err := ctx.BodyParser(&user)
 
 	if err != nil {
 		return util.GenerateResponse(ctx, http.StatusBadGateway, "Invalid Request", err.Error())
+	}
+
+	count, err := c.Client.From("users").Select("*", "", false).Eq("email", user.Email).Single().ExecuteTo(&getData)
+
+	if count != 0 {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Data already existed", err.Error())
+	}
+
+	if getData.Email != "" {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Email existed", "")
+	}
+
+	if getData.Username != "" {
+		return util.GenerateResponse(ctx, http.StatusBadGateway, "Username existed", "")
 	}
 
 	if errorMessage := util.ValidateData(&user); len(errorMessage) > 0 {
