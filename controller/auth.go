@@ -161,7 +161,7 @@ func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 		d.ExpiredDate = tempTime.Format("03:04PM 2 January 2006")
 
 		data, _, err := c.Client.From("reset_password_tokens").Insert(map[string]interface{}{
-			"username":             getData.Username,
+			"users_id":             getData.ID,
 			"email":                getData.Email,
 			"reset_password_token": d.Token,
 			"created_at":           time.Now(),
