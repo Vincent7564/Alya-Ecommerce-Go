@@ -231,7 +231,7 @@ func (c *Controller) ResetPassword(ctx *fiber.Ctx) error {
 		return util.GenerateResponse(ctx, http.StatusInternalServerError, "Validation Error", errorMessage)
 	}
 
-	count, err := c.Client.From("reset_password_tokens").Select("1", "", false).Eq("reset_password_token", request.Token).Single().ExecuteTo(&getData)
+	count, err := c.Client.From("reset_password_tokens").Select("*", "", false).Eq("reset_password_token", request.Token).Single().ExecuteTo(&getData)
 
 	if err != nil && count == 0 {
 		return util.GenerateResponse(ctx, http.StatusNotFound, "Token not found or expired!", err.Error())
@@ -253,7 +253,7 @@ func (c *Controller) ResetPassword(ctx *fiber.Ctx) error {
 	}
 
 	if data == nil {
-		return util.GenerateResponse(ctx, http.StatusInternalServerError, "No data returned", err.Error())
+		return util.GenerateResponse(ctx, http.StatusInternalServerError, "No data returned", "")
 	}
 
 	return util.GenerateResponse(ctx, http.StatusOK, "Succes", "")
