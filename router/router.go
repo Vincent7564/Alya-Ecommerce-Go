@@ -16,7 +16,7 @@ func (r *Router) Init() {
 	controller := controller.Controller{Client: r.Client}
 
 	AuthRoutes(r.App, controller)
-
+	UserRoutes(r.App, controller)
 }
 
 func InitRouter(app *fiber.App, client *supabase.Client) {

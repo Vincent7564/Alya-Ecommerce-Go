@@ -1,13 +1,18 @@
 package util
 
 import (
+	"Alya-Ecommerce-Go/model/entity"
 	"crypto/rand"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
+	"github.com/supabase-community/supabase-go"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 )
@@ -126,4 +131,62 @@ func SendEmail(to string, subject string, content string) error {
 		return fmt.Errorf("failed to send email: %w", err)
 	}
 	return nil
+}
+
+func CheckToken(c *supabase.Client, token string) bool {
+	var entityTokens entity.UsersToken
+
+	claims, err := DecodeToken(token)
+
+	if err != nil {
+		return false
+	}
+
+	exp, ok := (*claims)["exp"].(float64)
+
+	if !ok {
+		return false
+	}
+
+	expirationTime := time.Unix(int64(exp), 0)
+	if time.Now().After(expirationTime) {
+		return false
+	}
+
+	counter, err := c.From("users_token").Select("*", "", false).Eq("token", token).Single().ExecuteTo(&entityTokens)
+
+	if err != nil {
+		return false
+	}
+
+	if counter != 0 {
+		return false
+	}
+
+	if time.Now().After(entityTokens.ExpiresAt) {
+		return false
+	}
+	return true
+}
+
+func DecodeToken(tokenString string) (*jwt.MapClaims, error) {
+	var secret_token = os.Getenv("SECRET_TOKEN")
+	print(tokenString)
+	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
+		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(secret_token), nil
+	})
+
+	if err != nil {
+		fmt.Printf("error Parsing Token " + err.Error())
+		return nil, fmt.Errorf("error Parsing Token :%w", err)
+	}
+
+	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
+		return &claims, nil
+	}
+
+	return nil, fmt.Errorf("invalid Token")
 }

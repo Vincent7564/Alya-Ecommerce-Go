@@ -14,4 +14,5 @@ func AuthRoutes(app *fiber.App, controller controller.Controller) {
 	AuthRoutes.Post("/forgot-password", controller.ForgotPassword)
 	AuthRoutes.Post("/check-password-token", controller.CheckForgotPasswordToken)
 	AuthRoutes.Post("/reset-password", controller.ResetPassword)
+	AuthRoutes.Post("/logout", controller.Logout)
 }
