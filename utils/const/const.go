@@ -13,4 +13,5 @@ const (
 	ErrLoginSuccess        = "Login Success"
 	ErrInternalServerError = "Internal server error"
 	ErrTokenExpired        = "Token Expired"
+	ErrNotFound            = "Not Found"
 )
