@@ -1,6 +1,7 @@
 package cons
 
-const (
+// Error Message
+var (
 	ErrInvalidRequest      = "Invalid Request"
 	ErrDataExisted         = "Data already Existed"
 	ErrEmailExisted        = "Email Existed"

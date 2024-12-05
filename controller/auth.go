@@ -243,7 +243,7 @@ func (c *Controller) ResetPassword(ctx *fiber.Ctx) error {
 		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to update", err.Error())
 	}
 
-	return util.GenerateResponse(ctx, http.StatusOK, "Succes", "")
+	return util.GenerateResponse(ctx, http.StatusOK, "Success", "")
 }
 
 func (c *Controller) Logout(ctx *fiber.Ctx) error {

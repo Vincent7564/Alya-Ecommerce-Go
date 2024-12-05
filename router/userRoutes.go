@@ -11,4 +11,5 @@ func UserRoutes(app *fiber.App, controller controller.Controller) {
 	UserRoutes := app.Group("/users", middleware.ValidateTokenMiddleware(controller.Client))
 
 	UserRoutes.Post("/check-password", controller.CheckPassword)
+	UserRoutes.Patch("/:id", controller.UpdateProfile)
 }
