@@ -62,7 +62,7 @@ func (c *Controller) UpdateProfile(ctx *fiber.Ctx) error {
 	}, "", "").Eq("id", idParam).Single().Execute()
 
 	if err != nil {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to update", err.Error())
+		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to update ", err.Error())
 	}
 
 	return util.GenerateResponse(ctx, http.StatusOK, cons.ErrSuccess, "")
