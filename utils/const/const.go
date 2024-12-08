@@ -1,9 +1,13 @@
 package cons
 
+import (
+	"github.com/gofiber/fiber/v2"
+)
+
 // Error Message
 var (
-	ErrInvalidRequest      = "Invalid Request"
-	ErrDataExisted         = "Data already Existed"
+	ErrInvalidRequest      = fiber.NewError(fiber.StatusBadRequest, "Invalid Request")
+	ErrDataExisted         = "Data Existed"
 	ErrEmailExisted        = "Email Existed"
 	ErrUsernameExisted     = "Username Existed"
 	ErrValidationError     = "Validation Error"

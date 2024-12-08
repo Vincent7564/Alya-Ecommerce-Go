@@ -17,7 +17,7 @@ func (c *Controller) CheckPassword(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&request)
 
 	if err != nil {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrInvalidRequest, "")
+		return cons.ErrInvalidRequest
 	}
 
 	_, err = c.Client.From("users").Select("*", "", false).Eq("id", string(request.UsersId)).Single().ExecuteTo(&user)
@@ -41,7 +41,7 @@ func (c *Controller) UpdateProfile(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&request)
 
 	if err != nil {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrInvalidRequest, "")
+		return cons.ErrInvalidRequest
 	}
 
 	hashedPassword, err := util.HashPassword(request.Password)

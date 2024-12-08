@@ -22,7 +22,7 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&user)
 
 	if err != nil {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrInvalidRequest, err.Error())
+		return cons.ErrInvalidRequest
 	}
 
 	count, err := c.Client.From("users").Select("*", "", false).Eq("email", user.Email).Single().ExecuteTo(&getData)
@@ -76,7 +76,7 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 	var getData entity.UserEntity
 
 	if err != nil {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrInvalidRequest, err.Error())
+		return cons.ErrInvalidRequest
 	}
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
 		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrValidationError, errorMessage)
@@ -133,7 +133,7 @@ func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 
 	err := ctx.BodyParser(&request)
 	if err != nil {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrInvalidRequest, err.Error())
+		return cons.ErrInvalidRequest
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
@@ -189,7 +189,7 @@ func (c *Controller) CheckForgotPasswordToken(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&request)
 
 	if err != nil {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrInvalidRequest, err.Error())
+		return cons.ErrInvalidRequest
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
@@ -215,7 +215,7 @@ func (c *Controller) ResetPassword(ctx *fiber.Ctx) error {
 	err := ctx.BodyParser(&request)
 
 	if err != nil {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrInvalidRequest, err.Error())
+		return cons.ErrInvalidRequest
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
