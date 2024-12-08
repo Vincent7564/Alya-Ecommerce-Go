@@ -33,3 +33,9 @@ type ResetPasswordRequest struct {
 	Token    string `json:"token" validate:"required"`
 	Password string `json:"password" validate:"required,gte=8,lte=30"`
 }
+
+type LoginResponse struct {
+	Token    string `json:"token"`
+	Username string `json:"username"`
+	UserID   int    `json:"user_id"`
+}

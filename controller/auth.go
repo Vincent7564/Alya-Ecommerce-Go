@@ -71,6 +71,7 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 
 func (c *Controller) Login(ctx *fiber.Ctx) error {
 	var request dto.LoginRequest
+	var response dto.LoginResponse
 	err := ctx.BodyParser(&request)
 
 	var getData entity.UserEntity
@@ -118,7 +119,11 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 			return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to insert token", err)
 		}
 
-		return util.GenerateResponse(ctx, http.StatusOK, cons.ErrLoginSuccess, t)
+		response.Token = t
+		response.UserID = getData.ID
+		response.Username = getData.Username
+
+		return util.GenerateResponse(ctx, http.StatusOK, cons.ErrLoginSuccess, response)
 	}
 	return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrIncorrectPassword, "")
 }
