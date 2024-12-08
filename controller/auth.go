@@ -14,39 +14,49 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rs/zerolog/log"
 )
 
 func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 	var user dto.InsertUserRequest
 	var getData entity.UserEntity
+	FuncName := "RegisterUser"
 	err := ctx.BodyParser(&user)
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInvalidRequest
 	}
 
-	count, err := c.Client.From("users").Select("*", "", false).Eq("email", user.Email).Single().ExecuteTo(&getData)
+	_, err = c.Client.From("users").Select("*", "", false).Eq("email", user.Email).Single().ExecuteTo(&getData)
 
-	if count != 0 {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrDataExisted, err.Error())
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrDataExisted
 	}
 
 	if getData.Email != "" {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrEmailExisted, "")
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrEmailExisted
 	}
 
-	counter, err := c.Client.From("users").Select("*", "", false).Eq("username", user.Username).Single().ExecuteTo(&getData)
+	_, err = c.Client.From("users").Select("*", "", false).Eq("username", user.Username).Single().ExecuteTo(&getData)
 
-	if counter != 0 {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrDataExisted, err.Error())
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrDataExisted
 	}
 
 	if getData.Username != "" {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrUsernameExisted, "")
+		log.Error().Msg("API Endpoint /" + FuncName)
+		return cons.ErrUsernameExisted
 	}
 
 	if errorMessage := util.ValidateData(&user); len(errorMessage) > 0 {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrValidationError, errorMessage)
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + ":" + msg)
+		}
+		return cons.ErrValidationError
 	}
 
 	hashPassword, _ := util.HashPassword(user.Password)
@@ -63,30 +73,38 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 	}, false, "", "", "").Execute()
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrFailed+" to insert user", err.Error())
 	}
 
-	return util.GenerateResponse(ctx, http.StatusOK, cons.ErrSuccess+" insert user", "")
+	return cons.ErrSuccess
 }
 
 func (c *Controller) Login(ctx *fiber.Ctx) error {
 	var request dto.LoginRequest
 	var response dto.LoginResponse
+	FuncName := "Login"
 	err := ctx.BodyParser(&request)
 
 	var getData entity.UserEntity
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName + ":")
 		return cons.ErrInvalidRequest
 	}
+
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrValidationError, errorMessage)
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + ":" + msg)
+		}
+		return cons.ErrValidationError
 	}
 
-	count, err := c.Client.From("users").Select("*", "", false).Eq("username", request.Username).Single().ExecuteTo(&getData)
+	_, err = c.Client.From("users").Select("*", "", false).Eq("username", request.Username).Single().ExecuteTo(&getData)
 
-	if err != nil && count == 0 {
-		return util.GenerateResponse(ctx, http.StatusNotFound, cons.ErrAccountNotFound, err.Error())
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName + ":")
+		return cons.ErrAccountNotFound
 	}
 
 	isTrue := util.CheckPasswordHash(request.Password, getData.Password)
@@ -103,6 +121,7 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 		t, err := token.SignedString([]byte(secret_token))
 
 		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName + ":")
 			return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrFailed+" to Sign Token", err)
 		}
 		timeNow := time.Now().UTC()
@@ -116,6 +135,7 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 		}, false, "", "", "").Execute()
 
 		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName + ": ")
 			return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to insert token", err)
 		}
 
@@ -125,12 +145,14 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 
 		return util.GenerateResponse(ctx, http.StatusOK, cons.ErrLoginSuccess, response)
 	}
-	return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrIncorrectPassword, "")
+	log.Error().Msg("API Endpoint /" + FuncName + ": ")
+	return cons.ErrIncorrectPassword
 }
 
 func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 	var request dto.ForgotPasswordRequest
 	var getData entity.UserEntity
+	FuncName := "ForgotPassword"
 	type data struct {
 		Token       string
 		ExpiredDate string
@@ -138,20 +160,23 @@ func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 
 	err := ctx.BodyParser(&request)
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInvalidRequest
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrValidationError, errorMessage)
+		return cons.ErrValidationError
 	}
 
 	count, err := c.Client.From("users").Select("*", "", false).Eq("email", request.Email).Single().ExecuteTo(&getData)
 
 	if err != nil && count == 0 {
-		return util.GenerateResponse(ctx, http.StatusNotFound, cons.ErrAccountNotFound, err.Error())
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrAccountNotFound
 	}
 
 	if token, err := util.GenerateRandomToken(); err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrFailed+" to generate token", err.Error())
 	} else {
 		d := data{}
@@ -168,17 +193,20 @@ func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 		}, false, "", "", "").Execute()
 
 		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 			return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to insert token", err.Error())
 		}
 
 		tmpl, err := template.ParseFiles("utils/ForgotPassword.html")
 
 		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 			return util.GenerateResponse(ctx, http.StatusFailedDependency, cons.ErrFailed+" Parse Template", err.Error())
 		}
 
 		var body bytes.Buffer
 		if err := tmpl.Execute(&body, d); err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 			return util.GenerateResponse(ctx, http.StatusFailedDependency, cons.ErrFailed+" to execute template", err.Error())
 		}
 
@@ -191,23 +219,30 @@ func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 func (c *Controller) CheckForgotPasswordToken(ctx *fiber.Ctx) error {
 	var request dto.ForgotPasswordTokenRequest
 	var getData entity.ResetPasswordToken
+	FuncName := "CheckForgotPasswordToken"
 	err := ctx.BodyParser(&request)
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInvalidRequest
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrValidationError, errorMessage)
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + ":" + msg)
+		}
+		return cons.ErrValidationError
 	}
 
 	count, err := c.Client.From("reset_password_tokens").Select("*", "", false).Eq("reset_password_token", request.Token).Single().ExecuteTo(&getData)
 
 	if err != nil && count == 0 {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrInternalServerError, err.Error())
 	}
 
 	if getData.ExpiredAt.Before(time.Now()) {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusUnauthorized, cons.ErrTokenExpired, "")
 	}
 
@@ -217,23 +252,28 @@ func (c *Controller) CheckForgotPasswordToken(ctx *fiber.Ctx) error {
 func (c *Controller) ResetPassword(ctx *fiber.Ctx) error {
 	var request dto.ResetPasswordRequest
 	var getData entity.ResetPasswordToken
+	FuncName := "ResetPassword"
 	err := ctx.BodyParser(&request)
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInvalidRequest
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
-		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrValidationError, errorMessage)
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrValidationError
 	}
 
 	count, err := c.Client.From("reset_password_tokens").Select("*", "", false).Eq("reset_password_token", request.Token).Single().ExecuteTo(&getData)
 
 	if err != nil && count == 0 {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusNotFound, cons.ErrTokenExpired, err.Error())
 	}
 
 	if getData.ExpiredAt.Before(time.Now()) {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusUnauthorized, cons.ErrTokenExpired, nil)
 	}
 	hashPassword, _ := util.HashPassword(request.Password)
@@ -245,6 +285,7 @@ func (c *Controller) ResetPassword(ctx *fiber.Ctx) error {
 	}, "", "").Eq("email", getData.Email).Single().Execute()
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to update", err.Error())
 	}
 
@@ -252,14 +293,17 @@ func (c *Controller) ResetPassword(ctx *fiber.Ctx) error {
 }
 
 func (c *Controller) Logout(ctx *fiber.Ctx) error {
+	FuncName := "Logout"
 	authHeader := ctx.Get("Authorization")
 
 	if authHeader == "" {
+		log.Error().Msg("API Endpoint /" + FuncName + " : Header Missing")
 		return util.GenerateResponse(ctx, http.StatusBadRequest, "Authorization header missing", "")
 	}
 
 	tokenParts := strings.Split(authHeader, " ")
 	if len(tokenParts) != 2 || tokenParts[0] != "Bearer" {
+		log.Error().Msg("API Endpoint /" + FuncName + ": Token Invalid Format")
 		return util.GenerateResponse(ctx, http.StatusUnauthorized, "Invalid Token Format", "")
 	}
 
@@ -269,6 +313,7 @@ func (c *Controller) Logout(ctx *fiber.Ctx) error {
 	}, "", "").Eq("token", token).Execute()
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrFailed+" to logout, Please try again", err.Error())
 	}
 

@@ -9,21 +9,25 @@ import (
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/rs/zerolog/log"
 )
 
 func (c *Controller) CheckPassword(ctx *fiber.Ctx) error {
 	var request dto.CheckPasswordRequest
 	var user entity.UserEntity
+	FuncName := "CheckPassword"
 	err := ctx.BodyParser(&request)
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInvalidRequest
 	}
 
 	_, err = c.Client.From("users").Select("*", "", false).Eq("id", string(request.UsersId)).Single().ExecuteTo(&user)
 
 	if err != nil {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrAccountNotFound, "")
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrAccountNotFound
 	}
 
 	isTrue := util.CheckPasswordHash(request.Password, user.Password)
@@ -31,22 +35,26 @@ func (c *Controller) CheckPassword(ctx *fiber.Ctx) error {
 	if isTrue {
 		return util.GenerateResponse(ctx, http.StatusOK, "Password Correct", "")
 	} else {
-		return util.GenerateResponse(ctx, http.StatusBadGateway, "Incorrect Password", "")
+		log.Error().Err(&fiber.Error{Message: "Incorrect Password"}).Msg("API Endpoint /" + FuncName)
+		return cons.ErrIncorrectPassword
 	}
 }
 
 func (c *Controller) UpdateProfile(ctx *fiber.Ctx) error {
 	var request dto.UpdateProfileRequest
+	FuncName := "UpdateProfile"
 	idParam := ctx.Params("id")
 	err := ctx.BodyParser(&request)
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInvalidRequest
 	}
 
 	hashedPassword, err := util.HashPassword(request.Password)
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrInternalServerError, "")
 	}
 
@@ -62,8 +70,9 @@ func (c *Controller) UpdateProfile(ctx *fiber.Ctx) error {
 	}, "", "").Eq("id", idParam).Single().Execute()
 
 	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to update ", err.Error())
 	}
 
-	return util.GenerateResponse(ctx, http.StatusOK, cons.ErrSuccess, "")
+	return cons.ErrSuccess
 }

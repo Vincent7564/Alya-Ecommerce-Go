@@ -7,14 +7,14 @@ import (
 // Error Message
 var (
 	ErrInvalidRequest      = fiber.NewError(fiber.StatusBadRequest, "Invalid Request")
-	ErrDataExisted         = "Data Existed"
-	ErrEmailExisted        = "Email Existed"
-	ErrUsernameExisted     = "Username Existed"
-	ErrValidationError     = "Validation Error"
-	ErrSuccess             = "Success"
+	ErrDataExisted         = fiber.NewError(fiber.StatusBadGateway, "Data Existed")
+	ErrEmailExisted        = fiber.NewError(fiber.StatusBadGateway, "Email Existed")
+	ErrUsernameExisted     = fiber.NewError(fiber.StatusBadGateway, "Username Existed")
+	ErrValidationError     = fiber.NewError(fiber.StatusBadGateway, "Validation Error")
+	ErrSuccess             = fiber.NewError(fiber.StatusOK, "Success")
 	ErrFailed              = "Failed"
-	ErrAccountNotFound     = "Account not found"
-	ErrIncorrectPassword   = "Incorrect Password"
+	ErrAccountNotFound     = fiber.NewError(fiber.StatusNotFound, "Account not found")
+	ErrIncorrectPassword   = fiber.NewError(fiber.StatusBadGateway, "Invalid password")
 	ErrLoginSuccess        = "Login Success"
 	ErrInternalServerError = "Internal server error"
 	ErrTokenExpired        = "Token Expired"
