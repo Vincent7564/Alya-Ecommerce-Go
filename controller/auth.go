@@ -238,7 +238,7 @@ func (c *Controller) CheckForgotPasswordToken(ctx *fiber.Ctx) error {
 
 	if err != nil && count == 0 {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrInternalServerError, err.Error())
+		return cons.ErrInternalServerError
 	}
 
 	if getData.ExpiredAt.Before(time.Now()) {

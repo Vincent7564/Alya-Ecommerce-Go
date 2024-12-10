@@ -171,7 +171,6 @@ func CheckToken(c *supabase.Client, token string) bool {
 
 func DecodeToken(tokenString string) (*jwt.MapClaims, error) {
 	var secret_token = os.Getenv("SECRET_TOKEN")
-	print(tokenString)
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, errors.New("unexpected signing method")

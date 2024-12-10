@@ -42,7 +42,7 @@ func (c *Controller) CheckPassword(ctx *fiber.Ctx) error {
 
 func (c *Controller) UpdateProfile(ctx *fiber.Ctx) error {
 	var request dto.UpdateProfileRequest
-	FuncName := "UpdateProfile"
+	FuncName := "UpdateProfile "
 	idParam := ctx.Params("id")
 	err := ctx.BodyParser(&request)
 
@@ -55,7 +55,7 @@ func (c *Controller) UpdateProfile(ctx *fiber.Ctx) error {
 
 	if err != nil {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrInternalServerError, "")
+		return cons.ErrInternalServerError
 	}
 
 	_, _, err = c.Client.From("users").Update(map[string]interface{}{

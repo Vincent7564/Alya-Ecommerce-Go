@@ -16,7 +16,7 @@ var (
 	ErrAccountNotFound     = fiber.NewError(fiber.StatusNotFound, "Account not found")
 	ErrIncorrectPassword   = fiber.NewError(fiber.StatusBadGateway, "Invalid password")
 	ErrLoginSuccess        = "Login Success"
-	ErrInternalServerError = "Internal server error"
+	ErrInternalServerError = fiber.NewError(fiber.StatusInternalServerError, "Internal Server Error")
 	ErrTokenExpired        = "Token Expired"
 	ErrNotFound            = "Not Found"
 )
