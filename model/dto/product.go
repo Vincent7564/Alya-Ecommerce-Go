@@ -8,3 +8,7 @@ type AddProductRequest struct {
 	Discount          int    `json:"discount" validate:"required"`
 	Description       string `json:"description" validate:"required,gte=10"`
 }
+
+type AddCategoryRequest struct {
+	CategoryName string `json:"category_name" validate:"required"`
+}
