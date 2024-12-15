@@ -35,12 +35,10 @@ func main() {
 
 	log.Logger = zerolog.New(zerolog.ConsoleWriter{Out: os.Stdout, TimeFormat: time.RFC3339}).With().Timestamp().Logger()
 
-	// Example logs
 	log.Info().Msg("This is an info message")
 	log.Warn().Msg("This is a warning message")
 	log.Error().Msg("This is an error message")
 
-	// Log with additional fields
 	log.Info().
 		Str("module", "main").
 		Int("status", 200).

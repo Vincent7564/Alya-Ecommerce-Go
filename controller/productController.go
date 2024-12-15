@@ -102,3 +102,27 @@ func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 
 	return util.GenerateResponse(ctx, http.StatusOK, "Categories retrieved successfully", categories)
 }
+
+func (c *Controller) UpdateCategory(ctx *fiber.Ctx) error {
+	idParam := ctx.Params("id")
+	FuncName := "UpdateCategory"
+	var request dto.UpdateCategoryRequest
+
+	err := ctx.BodyParser(&request)
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInvalidRequest
+	}
+
+	_, _, err = c.Client.From("category").Update(map[string]interface{}{
+		"category_name": request.CategoryName,
+	}, "", "").Eq("id", string(idParam)).Execute()
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint / " + FuncName)
+		return cons.ErrInternalServerError
+	}
+
+	return util.GenerateResponse(ctx, http.StatusOK, "Update Category Success", nil)
+}
