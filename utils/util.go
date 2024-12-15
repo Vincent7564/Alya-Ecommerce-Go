@@ -12,6 +12,7 @@ import (
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
 	"github.com/golang-jwt/jwt/v5"
+	"github.com/rs/zerolog/log"
 	"github.com/supabase-community/supabase-go"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
@@ -179,7 +180,7 @@ func DecodeToken(tokenString string) (*jwt.MapClaims, error) {
 	})
 
 	if err != nil {
-		fmt.Printf("error Parsing Token " + err.Error())
+		log.Error().Err(err).Msg("Error in Decode Token:")
 		return nil, fmt.Errorf("error Parsing Token :%w", err)
 	}
 

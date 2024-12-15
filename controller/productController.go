@@ -67,6 +67,7 @@ func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
 
 	_, _, err = c.Client.From("category").Insert(map[string]interface{}{
 		"category_name": request.CategoryName,
+		"is_active":     true,
 	}, false, "", "", "").Execute()
 
 	if err != nil {
@@ -82,7 +83,8 @@ func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 	var categories []entity.Categories
 
 	_, err := c.Client.From("category").
-		Select("id, category_name", "", false).
+		Select("id, category_name,created_at", "", false).
+		Eq("is_active", "TRUE").
 		ExecuteTo(&categories)
 
 	if err != nil {
