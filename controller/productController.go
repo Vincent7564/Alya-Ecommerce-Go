@@ -58,6 +58,7 @@ func (c *Controller) GetProduct(ctx *fiber.Ctx) error {
 	_, err := c.Client.From("products").
 		Select("*, category(category_name)", "", false).
 		ExecuteTo(&products)
+
 	fmt.Print(products)
 	if err != nil {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
@@ -67,6 +68,22 @@ func (c *Controller) GetProduct(ctx *fiber.Ctx) error {
 	return util.GenerateResponse(ctx, http.StatusOK, "Success", products)
 }
 
+func (c *Controller) GetProductById(ctx *fiber.Ctx) error {
+	FuncName := "GetProductById"
+	var products entity.Products
+	idParams := ctx.Params("id")
+
+	_, err := c.Client.From("products").Select("*,category(category_name)", "", false).
+		Eq("id", idParams).Single().ExecuteTo(&products)
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+
+	return util.GenerateResponse(ctx, http.StatusOK, "Success", products)
+
+}
 func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
 	var request dto.AddCategoryRequest
 	FuncName := "AddCategory :"
@@ -98,6 +115,58 @@ func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
 	return cons.ErrSuccess
 }
 
+func (c *Controller) DeleteProduct(ctx *fiber.Ctx) error {
+	FuncName := "DeleteProduct"
+	idParams := ctx.Params("id")
+
+	_, _, err := c.Client.From("products").
+		Delete("", "").
+		Eq("id", idParams).
+		Execute()
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+	return cons.ErrSuccess
+}
+
+func (c *Controller) UpdateProduct(ctx *fiber.Ctx) error {
+	FuncName := "UpdateProduct"
+	idParams := ctx.Params("id")
+
+	var request dto.UpdateProductRequest
+
+	err := ctx.BodyParser(&request)
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInvalidRequest
+	}
+
+	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
+		}
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
+		return cons.ErrValidationError
+	}
+
+	_, _, err = c.Client.From("products").Update(map[string]interface{}{
+		"product_name":        request.ProductName,
+		"product_stock":       request.ProductStock,
+		"product_price":       request.ProductPrice,
+		"product_category_id": request.ProductCategoryId,
+		"discount":            request.Discount,
+		"description":         request.Description,
+	}, "", "").Eq("id", idParams).Execute()
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+	return cons.ErrSuccess
+}
 func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 	FuncName := "GetCategory"
 

@@ -11,5 +11,4 @@ type Products struct {
 	} `json:"category"`
 	ProductDescription string `json:"description"`
 	Discount           int64  `json:"discount"`
-	CategoryName       string `json:"category_name"`
 }
