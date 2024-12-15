@@ -124,6 +124,29 @@ func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 	return util.GenerateResponse(ctx, http.StatusOK, "Categories retrieved successfully", categories)
 }
 
+func (c *Controller) GetCategoryById(ctx *fiber.Ctx) error {
+	idParams := ctx.Params("id")
+	FuncName := "GetCategoryById"
+
+	var categories entity.Categories
+
+	_, err := c.Client.From("category").
+		Select("id, category_name", "", false).
+		Eq("is_active", "TRUE").
+		Eq("id", idParams).
+		Single().
+		ExecuteTo(&categories)
+
+	if err != nil {
+		log.Error().Err(err).
+			Str("function", FuncName).
+			Msg("Failed to fetch categories from database")
+		return cons.ErrDataNotFound
+	}
+
+	return util.GenerateResponse(ctx, http.StatusOK, "Categories retrieved successfully", categories)
+}
+
 func (c *Controller) UpdateCategory(ctx *fiber.Ctx) error {
 	idParam := ctx.Params("id")
 	FuncName := "UpdateCategory"

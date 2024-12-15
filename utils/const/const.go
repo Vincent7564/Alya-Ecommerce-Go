@@ -19,4 +19,5 @@ var (
 	ErrInternalServerError = fiber.NewError(fiber.StatusInternalServerError, "Internal Server Error")
 	ErrTokenExpired        = "Token Expired"
 	ErrNotFound            = "Not Found"
+	ErrDataNotFound        = fiber.NewError(fiber.StatusBadGateway, "Data not Found")
 )
