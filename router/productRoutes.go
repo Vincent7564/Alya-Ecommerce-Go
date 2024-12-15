@@ -11,6 +11,8 @@ func ProductRoutes(app *fiber.App, controller controller.Controller) {
 	ProductRoutes := app.Group("/product", middleware.ValidateTokenMiddleware(controller.Client))
 
 	ProductRoutes.Post("", controller.AddProduct)
+	ProductRoutes.Get("", controller.GetProduct)
+
 	ProductRoutes.Post("/category/", controller.AddCategory)
 	ProductRoutes.Get("/category/", controller.GetCategory)
 	ProductRoutes.Patch("/category/:id", controller.UpdateCategory)

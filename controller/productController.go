@@ -5,6 +5,7 @@ import (
 	"Alya-Ecommerce-Go/model/entity"
 	util "Alya-Ecommerce-Go/utils"
 	cons "Alya-Ecommerce-Go/utils/const"
+	"fmt"
 	"net/http"
 	"strings"
 
@@ -47,6 +48,23 @@ func (c *Controller) AddProduct(ctx *fiber.Ctx) error {
 	}
 
 	return cons.ErrSuccess
+}
+
+func (c *Controller) GetProduct(ctx *fiber.Ctx) error {
+	FuncName := "GetProduct :"
+
+	var products []entity.Products
+
+	_, err := c.Client.From("products").
+		Select("*, category(category_name)", "", false).
+		ExecuteTo(&products)
+	fmt.Print(products)
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+
+	return util.GenerateResponse(ctx, http.StatusOK, "Success", products)
 }
 
 func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
