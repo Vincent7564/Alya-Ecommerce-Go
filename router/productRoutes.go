@@ -14,4 +14,5 @@ func ProductRoutes(app *fiber.App, controller controller.Controller) {
 	ProductRoutes.Post("/category/", controller.AddCategory)
 	ProductRoutes.Get("/category/", controller.GetCategory)
 	ProductRoutes.Patch("/category/:id", controller.UpdateCategory)
+	ProductRoutes.Delete("/category/:id", controller.DeleteCategory)
 }

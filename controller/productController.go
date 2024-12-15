@@ -136,3 +136,17 @@ func (c *Controller) UpdateCategory(ctx *fiber.Ctx) error {
 
 	return util.GenerateResponse(ctx, http.StatusOK, "Update Category Success", nil)
 }
+
+func (c *Controller) DeleteCategory(ctx *fiber.Ctx) error {
+	idParam := ctx.Params("id")
+	FuncName := "DeleteCategory"
+	_, _, err := c.Client.From("category").Update(map[string]interface{}{
+		"is_active": false,
+	}, "", "").Eq("id", idParam).Execute()
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint / " + FuncName)
+		return cons.ErrInternalServerError
+	}
+	return util.GenerateResponse(ctx, http.StatusOK, "Success", nil)
+}
