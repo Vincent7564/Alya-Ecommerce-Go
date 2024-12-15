@@ -83,7 +83,7 @@ func (c *Controller) GetCategory(ctx *fiber.Ctx) error {
 	var categories []entity.Categories
 
 	_, err := c.Client.From("category").
-		Select("id, category_name,created_at", "", false).
+		Select("id, category_name", "", false).
 		Eq("is_active", "TRUE").
 		ExecuteTo(&categories)
 
