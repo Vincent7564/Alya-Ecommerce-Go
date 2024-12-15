@@ -6,6 +6,7 @@ import (
 	util "Alya-Ecommerce-Go/utils"
 	cons "Alya-Ecommerce-Go/utils/const"
 	"net/http"
+	"strings"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
@@ -26,6 +27,7 @@ func (c *Controller) AddProduct(ctx *fiber.Ctx) error {
 		for _, msg := range errorMessage {
 			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
 		}
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
 		return cons.ErrValidationError
 	}
 
@@ -62,6 +64,7 @@ func (c *Controller) AddCategory(ctx *fiber.Ctx) error {
 		for _, msg := range errorMessage {
 			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
 		}
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
 		return cons.ErrValidationError
 	}
 
@@ -115,6 +118,13 @@ func (c *Controller) UpdateCategory(ctx *fiber.Ctx) error {
 		return cons.ErrInvalidRequest
 	}
 
+	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
+		}
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
+		return cons.ErrValidationError
+	}
 	_, _, err = c.Client.From("category").Update(map[string]interface{}{
 		"category_name": request.CategoryName,
 	}, "", "").Eq("id", string(idParam)).Execute()

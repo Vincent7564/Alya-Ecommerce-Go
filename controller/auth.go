@@ -53,9 +53,11 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 	}
 
 	if errorMessage := util.ValidateData(&user); len(errorMessage) > 0 {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		for _, msg := range errorMessage {
-			log.Error().Msg("Validation error in API Endpoint /" + FuncName + ":" + msg)
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
 		}
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
 		return cons.ErrValidationError
 	}
 
@@ -94,9 +96,12 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		for _, msg := range errorMessage {
 			log.Error().Msg("Validation error in API Endpoint /" + FuncName + ":" + msg)
 		}
+
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
 		return cons.ErrValidationError
 	}
 
@@ -165,6 +170,11 @@ func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
+		}
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
 		return cons.ErrValidationError
 	}
 
@@ -228,9 +238,12 @@ func (c *Controller) CheckForgotPasswordToken(ctx *fiber.Ctx) error {
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		for _, msg := range errorMessage {
 			log.Error().Msg("Validation error in API Endpoint /" + FuncName + ":" + msg)
 		}
+
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
 		return cons.ErrValidationError
 	}
 
@@ -262,6 +275,10 @@ func (c *Controller) ResetPassword(ctx *fiber.Ctx) error {
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
+		}
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
 		return cons.ErrValidationError
 	}
 
