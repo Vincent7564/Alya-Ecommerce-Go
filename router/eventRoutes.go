@@ -11,6 +11,6 @@ func EventRoutes(app *fiber.App, controller controller.Controller) {
 	EventRoutes := app.Group("/event", middleware.ValidateTokenMiddleware(controller.Client))
 
 	EventRoutes.Post("", controller.AddEvent)
-	EventRoutes.Delete("", controller.DeleteEvent)
+	EventRoutes.Delete("/:id", controller.DeleteEvent)
 	EventRoutes.Get("", controller.GetEvent)
 }

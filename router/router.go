@@ -18,6 +18,7 @@ func (r *Router) Init() {
 	AuthRoutes(r.App, controller)
 	UserRoutes(r.App, controller)
 	ProductRoutes(r.App, controller)
+	EventRoutes(r.App, controller)
 }
 
 func InitRouter(app *fiber.App, client *supabase.Client) {
