@@ -15,6 +15,9 @@ type Router struct {
 func (r *Router) Init() {
 	controller := controller.Controller{Client: r.Client}
 
+	PublicProductRoutes(r.App, controller)
+	PublicEventRoutes(r.App, controller)
+
 	AuthRoutes(r.App, controller)
 	UserRoutes(r.App, controller)
 	ProductRoutes(r.App, controller)
