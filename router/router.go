@@ -23,6 +23,7 @@ func (r *Router) Init() {
 	ProductRoutes(r.App, controller)
 	WishlistRoutes(r.App, controller)
 	EventRoutes(r.App, controller)
+	CartRoutes(r.App, controller)
 }
 
 func InitRouter(app *fiber.App, client *supabase.Client) {
