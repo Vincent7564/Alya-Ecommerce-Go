@@ -25,3 +25,7 @@ type UpdateProductRequest struct {
 	Discount          int    `json:"discount"`
 	Description       string `json:"description" validate:"required,gte=10"`
 }
+
+type GetProductBySearch struct {
+	ProductName string `json:"product_name"`
+}

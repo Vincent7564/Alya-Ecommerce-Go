@@ -12,7 +12,9 @@ func PublicProductRoutes(app *fiber.App, controller controller.Controller) {
 
 	PublicProductRoutes.Get("/category/", controller.GetCategory)
 	PublicProductRoutes.Get("", controller.GetProduct)
+	PublicProductRoutes.Get("/search/:search", controller.GetProductBySearch)
 	PublicProductRoutes.Get("/:id", controller.GetProductById)
+
 }
 
 func ProductRoutes(app *fiber.App, controller controller.Controller) {
