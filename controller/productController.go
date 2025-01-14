@@ -68,6 +68,36 @@ func (c *Controller) GetProduct(ctx *fiber.Ctx) error {
 	return util.GenerateResponse(ctx, http.StatusOK, "Success", products)
 }
 
+func (c *Controller) GetProductBySearch(ctx *fiber.Ctx) error {
+	FuncName := "GetProductBySearch"
+	var products []entity.Products
+	var request dto.GetProductBySearch
+	err := ctx.BodyParser(&request)
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInvalidRequest
+	}
+	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
+		}
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
+		return cons.ErrValidationError
+	}
+	_, err = c.Client.From("products").
+		Select("*,category(category_name)", "", false).
+		Ilike("product_name", "%"+ctx.Params("search")+"%").
+		ExecuteTo(&products)
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+
+	return util.GenerateResponse(ctx, http.StatusOK, "Success", products)
+}
+
 func (c *Controller) GetProductById(ctx *fiber.Ctx) error {
 	FuncName := "GetProductById"
 	var products entity.Products
