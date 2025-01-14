@@ -71,24 +71,20 @@ func (c *Controller) GetProduct(ctx *fiber.Ctx) error {
 func (c *Controller) GetProductBySearch(ctx *fiber.Ctx) error {
 	FuncName := "GetProductBySearch"
 	var products []entity.Products
-	var request dto.GetProductBySearch
-	err := ctx.BodyParser(&request)
 
-	if err != nil {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrInvalidRequest
+	productName := ctx.Query("product_name")
+	categoryID := ctx.Query("category_id")
+
+	query := c.Client.From("products").Select("*,category(category_name)", "", false)
+
+	if productName != "" {
+		query = query.Ilike("product_name", "%"+productName+"%")
 	}
-	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
-		for _, msg := range errorMessage {
-			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
-		}
-		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
-		return cons.ErrValidationError
+	if categoryID != "" {
+		query = query.Eq("product_category_id", categoryID)
 	}
-	_, err = c.Client.From("products").
-		Select("*,category(category_name)", "", false).
-		Ilike("product_name", "%"+ctx.Params("search")+"%").
-		ExecuteTo(&products)
+
+	_, err := query.ExecuteTo(&products)
 
 	if err != nil {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
