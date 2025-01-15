@@ -2,6 +2,7 @@ package controller
 
 import (
 	"Alya-Ecommerce-Go/model/dto"
+	"Alya-Ecommerce-Go/model/entity"
 	util "Alya-Ecommerce-Go/utils"
 	cons "Alya-Ecommerce-Go/utils/const"
 	"net/http"
@@ -59,4 +60,24 @@ func (c *Controller) GetCart(ctx *fiber.Ctx) error {
 		return cons.ErrInternalServerError
 	}
 	return util.GenerateResponse(ctx, http.StatusOK, "Success", carts)
+}
+
+func (c *Controller) DeleteCartItem(ctx *fiber.Ctx) error {
+	FuncName := "DeleteCartItem :"
+	idParams := ctx.Params("id")
+	var cart entity.Cart
+	_, err := c.Client.From("carts").Select("*", "", false).Eq("id", idParams).Single().ExecuteTo(&cart)
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrDataNotFound
+	}
+
+	_, _, err = c.Client.From("carts").Delete("", "").Eq("id", idParams).Execute()
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+
+	return cons.ErrSuccess
 }
