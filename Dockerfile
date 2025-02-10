@@ -17,6 +17,8 @@ COPY --from=builder /app/app .
 
 COPY utils/ForgotPassword.html ./utils/
 
+COPY .env .env
+
 EXPOSE 8080
 
 CMD ["./app"]
