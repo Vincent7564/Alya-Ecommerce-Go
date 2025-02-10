@@ -12,5 +12,5 @@ func CartRoutes(app *fiber.App, controller controller.Controller) {
 
 	CartRoutes.Post("", controller.AddCart)
 	CartRoutes.Get("/:id", controller.GetCart)
-	// EventRoutes.Get("", controller.GetEvent) // move to public
+	CartRoutes.Delete("/:id", controller.DeleteCartItem)
 }
