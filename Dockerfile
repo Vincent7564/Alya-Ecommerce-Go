@@ -13,10 +13,10 @@ FROM alpine:latest
 
 WORKDIR /app
 
-COPY --from=builder /app/Alya-Ecommerce-Go .
+COPY --from=builder /app/app .
 
 COPY utils/ForgotPassword.html ./utils/
 
 EXPOSE 8080
 
-CMD ["./Alya-Ecommerce-Go"]
+CMD ["./app"]
