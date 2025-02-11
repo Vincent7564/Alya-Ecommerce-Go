@@ -1,37 +1,36 @@
 name: Alya-Ecommerce-Go Deployment
  
 on:
-    push:
-        branches:
-        - main
+  push:
+    branches:
+      - main
 
 jobs:
-    deploy:
-        runs-on: ubuntu-latest
+  deploy:
+    runs-on: ubuntu-latest
 
-        steps:
-            -name: Checkout Code
-             uses:actions/checkout@v4
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
 
-            -name: Login to docker hub
-             uses:docker/login-action@v2
-            with:
-                username: ${{ secrets.SECRET_CREDENTIAL_USER }}
-                password: ${{ secrets.SECRET_CREDENTIAL_PASSWORD }} 
-            
-            -name: Extract metadata (tags,labels) for Docker
-            id: metadata
-            uses : docker/metadata-action@v5
-            with:
-                images: soonhee756/alya-ecommerce-go
-            
-            
-            -name: Build and push Docker image
-            id: push
-            uses :docker/build-push-action@v2
-            with:
-                context: .
-                file: ./Dockerfile
-                push: true
-                tags: ${{ steps.metadata.outputs.tags }}
-                labels: ${{ steps.metadata.outputs.labels }}
+      - name: Login to Docker Hub
+        uses: docker/login-action@v2
+        with:
+          username: ${{ secrets.SECRET_CREDENTIAL_USER }}
+          password: ${{ secrets.SECRET_CREDENTIAL_PASSWORD }}
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: metadata
+        uses: docker/metadata-action@v5
+        with:
+          images: soonhee756/alya-ecommerce-go
+
+      - name: Build and push Docker image
+        id: push
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: ${{ steps.metadata.outputs.tags }}
+          labels: ${{ steps.metadata.outputs.labels }}
