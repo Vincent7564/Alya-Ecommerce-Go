@@ -17,3 +17,7 @@ type Product struct {
 	ProductPrice int    `json:"product_price"`
 	ProductStock int    `json:"product_stock"`
 }
+
+type UpdateCartRequest struct {
+	Qty int `json:"qty" validate:"required"`
+}

@@ -81,3 +81,32 @@ func (c *Controller) DeleteCartItem(ctx *fiber.Ctx) error {
 
 	return cons.ErrSuccess
 }
+
+func (c *Controller) UpdateCart(ctx *fiber.Ctx) error {
+	FuncName := "UpdateCart :"
+	idParams := ctx.Params("id")
+	var request dto.UpdateCartRequest
+	if err := ctx.BodyParser(&request); err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInvalidRequest
+	}
+
+	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
+		}
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
+		return cons.ErrValidationError
+	}
+
+	_, _, err := c.Client.From("carts").Update(map[string]interface{}{
+		"qty":        request.Qty,
+		"updated_at": time.Now(),
+		"updated_by": nil,
+	}, "", "").Eq("id", idParams).Execute()
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+	return cons.ErrSuccess
+}
