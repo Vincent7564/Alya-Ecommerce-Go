@@ -51,10 +51,9 @@ func main() {
 	SupabaseURL := os.Getenv("NEXT_PUBLIC_SUPABASE_URL")
 	SupabaseAnon := os.Getenv("NEXT_PUBLIC_SUPABASE_ANON")
 	client, err := supabase.NewClient(SupabaseURL, SupabaseAnon, &supabase.ClientOptions{})
-
 	if err != nil {
 		fmt.Printf("Cannot connect to Supabase!")
 	}
 	router.InitRouter(app, client)
-	app.Listen(":8070")
+	app.Listen(":8060")
 }

@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"io"
 	"os"
 	"time"
 
@@ -14,6 +15,7 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/rs/zerolog/log"
 	"github.com/supabase-community/supabase-go"
+	"github.com/valyala/fasthttp"
 	"golang.org/x/crypto/bcrypt"
 	"gopkg.in/gomail.v2"
 )
@@ -189,4 +191,54 @@ func DecodeToken(tokenString string) (*jwt.MapClaims, error) {
 	}
 
 	return nil, fmt.Errorf("invalid Token")
+}
+
+func ImageUploader(c *fiber.Ctx, productName string) (string, error) {
+
+	file, err := c.FormFile("product")
+	if err != nil {
+		return "", fmt.Errorf("error getting file: %v", err)
+	}
+
+	src, err := file.Open()
+	if err != nil {
+		return "", fmt.Errorf("error opening file: %v", err)
+	}
+	defer src.Close()
+
+	fileName := fmt.Sprintf("%s_%s_%s", productName, time.Now().Format("2006-01-02_15-04-05"), file.Filename)
+
+	supabaseURL := os.Getenv("NEXT_PUBLIC_SUPABASE_URL")
+	supabaseBucket := os.Getenv("NEXT_PUBLIC_SUPABASE_BUCKET")
+	uploadURL := fmt.Sprintf("%sstorage/v1/object/%s/%s", supabaseURL, supabaseBucket, fileName)
+
+	fileBytes, err := io.ReadAll(src)
+	if err != nil {
+		return "", fmt.Errorf("error reading file content: %v", err)
+	}
+
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+
+	req.SetRequestURI(uploadURL)
+	req.Header.SetMethod("POST")
+	req.Header.Set("Authorization", "Bearer "+os.Getenv("NEXT_PUBLIC_SUPABASE_ANON"))
+	req.Header.Set("Content-Type", "multipart/octet-stream")
+	req.SetBody(fileBytes)
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	client := fasthttp.Client{}
+	err = client.Do(req, resp)
+	if err != nil {
+		return "", fmt.Errorf("request failed: %v", err)
+	}
+
+	if resp.StatusCode() != fasthttp.StatusOK && resp.StatusCode() != fasthttp.StatusCreated {
+		return "", fmt.Errorf("failed to upload image, status: %d, response: %s", resp.StatusCode(), resp.Body())
+	}
+
+	fileURL := fmt.Sprintf("%s/storage/v1/object/public/%s/%s", supabaseURL, supabaseBucket, fileName)
+	return fileURL, nil
 }

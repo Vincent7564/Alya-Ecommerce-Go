@@ -110,3 +110,13 @@ func (c *Controller) UpdateCart(ctx *fiber.Ctx) error {
 	}
 	return cons.ErrSuccess
 }
+
+func (c *Controller) UploadImageTest(ctx *fiber.Ctx) error {
+	FuncName := "UploadImageTest :"
+	_, err := util.ImageUploader(ctx, "test")
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+	return cons.ErrSuccess
+}
