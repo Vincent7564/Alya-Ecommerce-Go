@@ -5,6 +5,8 @@ import (
 	"Alya-Ecommerce-Go/model/entity"
 	util "Alya-Ecommerce-Go/utils"
 	cons "Alya-Ecommerce-Go/utils/const"
+	"fmt"
+	"io"
 	"net/http"
 	"strings"
 	"time"
@@ -113,10 +115,40 @@ func (c *Controller) UpdateCart(ctx *fiber.Ctx) error {
 
 func (c *Controller) UploadImageTest(ctx *fiber.Ctx) error {
 	FuncName := "UploadImageTest :"
-	_, err := util.ImageUploader(ctx, "test")
+
+	formData, err := ctx.MultipartForm()
 	if err != nil {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInternalServerError
 	}
+
+	files := formData.File["product"] //Depends on key name
+
+	for _, file := range files {
+		fmt.Println(file.Filename)
+
+		src, err := file.Open()
+		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+			return cons.ErrInternalServerError
+		}
+
+		fileBytes, err := io.ReadAll(src)
+		if err != nil {
+			return cons.ErrInternalServerError
+		}
+
+		fileName := fmt.Sprintf("%s_%s_%s", "test", time.Now().Format("2006-01-02_15-04-05"), file.Filename)
+
+		path, err := util.ImageUploader(fileBytes, fileName)
+
+		if err != nil {
+			return cons.ErrInternalServerError
+		}
+		src.Close()
+
+		fmt.Println(path)
+	}
 	return cons.ErrSuccess
+
 }

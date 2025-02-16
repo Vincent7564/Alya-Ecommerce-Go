@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"os"
 	"time"
 
@@ -193,29 +192,11 @@ func DecodeToken(tokenString string) (*jwt.MapClaims, error) {
 	return nil, fmt.Errorf("invalid Token")
 }
 
-func ImageUploader(c *fiber.Ctx, productName string) (string, error) {
-
-	file, err := c.FormFile("product")
-	if err != nil {
-		return "", fmt.Errorf("error getting file: %v", err)
-	}
-
-	src, err := file.Open()
-	if err != nil {
-		return "", fmt.Errorf("error opening file: %v", err)
-	}
-	defer src.Close()
-
-	fileName := fmt.Sprintf("%s_%s_%s", productName, time.Now().Format("2006-01-02_15-04-05"), file.Filename)
+func ImageUploader(fileBytes []byte, productName string) (string, error) {
 
 	supabaseURL := os.Getenv("NEXT_PUBLIC_SUPABASE_URL")
 	supabaseBucket := os.Getenv("NEXT_PUBLIC_SUPABASE_BUCKET")
-	uploadURL := fmt.Sprintf("%sstorage/v1/object/%s/%s", supabaseURL, supabaseBucket, fileName)
-
-	fileBytes, err := io.ReadAll(src)
-	if err != nil {
-		return "", fmt.Errorf("error reading file content: %v", err)
-	}
+	uploadURL := fmt.Sprintf("%sstorage/v1/object/%s/%s", supabaseURL, supabaseBucket, productName)
 
 	req := fasthttp.AcquireRequest()
 	defer fasthttp.ReleaseRequest(req)
@@ -230,7 +211,7 @@ func ImageUploader(c *fiber.Ctx, productName string) (string, error) {
 	defer fasthttp.ReleaseResponse(resp)
 
 	client := fasthttp.Client{}
-	err = client.Do(req, resp)
+	err := client.Do(req, resp)
 	if err != nil {
 		return "", fmt.Errorf("request failed: %v", err)
 	}
@@ -239,6 +220,5 @@ func ImageUploader(c *fiber.Ctx, productName string) (string, error) {
 		return "", fmt.Errorf("failed to upload image, status: %d, response: %s", resp.StatusCode(), resp.Body())
 	}
 
-	fileURL := fmt.Sprintf("%s/storage/v1/object/public/%s/%s", supabaseURL, supabaseBucket, fileName)
-	return fileURL, nil
+	return uploadURL, nil
 }
