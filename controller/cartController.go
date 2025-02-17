@@ -135,6 +135,7 @@ func (c *Controller) UploadImageTest(ctx *fiber.Ctx) error {
 
 		fileBytes, err := io.ReadAll(src)
 		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 			return cons.ErrInternalServerError
 		}
 

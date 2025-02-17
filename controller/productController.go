@@ -5,9 +5,12 @@ import (
 	"Alya-Ecommerce-Go/model/entity"
 	util "Alya-Ecommerce-Go/utils"
 	cons "Alya-Ecommerce-Go/utils/const"
+	"encoding/json"
 	"fmt"
+	"io"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
@@ -17,11 +20,22 @@ func (c *Controller) AddProduct(ctx *fiber.Ctx) error {
 	var request dto.AddProductRequest
 
 	FuncName := "AddProduct :"
-	err := ctx.BodyParser(&request)
-
+	formData, err := ctx.MultipartForm()
 	if err != nil {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+
+	jsonStrArr, exists := formData.Value["data"]
+
+	if !exists || len(jsonStrArr) == 0 {
+		log.Error().Msg("Missing 'data' key in form-data")
 		return cons.ErrInvalidRequest
+	}
+
+	if err = json.Unmarshal([]byte(jsonStrArr[0]), &request); err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
 	}
 
 	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
@@ -32,15 +46,79 @@ func (c *Controller) AddProduct(ctx *fiber.Ctx) error {
 		return cons.ErrValidationError
 	}
 
-	_, _, err = c.Client.From("products").Insert(map[string]interface{}{
-		"product_name":        request.ProductName,
-		"product_stock":       request.ProductStock,
-		"product_price":       request.ProductPrice,
-		"product_category_id": request.ProductCategoryId,
-		"discount":            request.Discount,
-		"description":         request.Description,
-		"created_by":          "Testing",
-	}, false, "", "", "").Execute()
+	files := formData.File["product"] //Depends on key name
+	var currentTime = time.Now()
+	var productID int
+	insertResult, _, err := c.Client.From("products").
+		Insert(map[string]interface{}{
+			"product_name":        request.ProductName,
+			"product_stock":       request.ProductStock,
+			"product_price":       request.ProductPrice,
+			"product_category_id": request.ProductCategoryId,
+			"discount":            request.Discount,
+			"description":         request.Description,
+			"created_by":          "Testing",
+			"created_at":          currentTime.Format(time.RFC3339),
+		}, false, "", "", "").Execute()
+
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		return cons.ErrInternalServerError
+	}
+
+	// Extract the inserted product ID
+	if len(insertResult) > 0 {
+		var result []struct {
+			ID int `json:"id"`
+		}
+		if err := json.Unmarshal(insertResult, &result); err == nil && len(result) > 0 {
+			productID = result[0].ID
+		}
+	}
+
+	if productID == 0 {
+		log.Error().Msg("Failed to get inserted product ID")
+		return cons.ErrInternalServerError
+	}
+
+	for _, file := range files {
+		fmt.Println(file.Filename)
+
+		src, err := file.Open()
+		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+			return cons.ErrInternalServerError
+		}
+
+		fileBytes, err := io.ReadAll(src)
+		if err != nil {
+			return cons.ErrInternalServerError
+		}
+
+		fileName := fmt.Sprintf("%s_%s_%s", request.ProductName, time.Now().Format("2006-01-02_15-04-05"), file.Filename)
+
+		path, err := util.ImageUploader(fileBytes, fileName)
+
+		if err != nil {
+			return cons.ErrInternalServerError
+		}
+		src.Close()
+		_, _, err = c.Client.From("product_images").Insert(map[string]interface{}{
+			"product_id": productID,
+			"images":     path,
+			"created_at": time.Now(),
+			"created_by": "Testing",
+			"updated_at": time.Now(),
+			"updated_by": "Testing",
+		}, false, "", "", "").Execute()
+
+		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+			return cons.ErrInternalServerError
+		}
+
+		fmt.Println(path)
+	}
 
 	if err != nil {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)

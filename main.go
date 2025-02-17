@@ -55,5 +55,5 @@ func main() {
 		fmt.Printf("Cannot connect to Supabase!")
 	}
 	router.InitRouter(app, client)
-	app.Listen(":8060")
+	app.Listen(":8070")
 }
