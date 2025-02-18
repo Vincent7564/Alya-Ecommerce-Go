@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"os"
 	"strings"
 	"time"
 
@@ -66,7 +67,6 @@ func (c *Controller) AddProduct(ctx *fiber.Ctx) error {
 		return cons.ErrInternalServerError
 	}
 
-	// Extract the inserted product ID
 	if len(insertResult) > 0 {
 		var result []struct {
 			ID int `json:"id"`
@@ -105,7 +105,7 @@ func (c *Controller) AddProduct(ctx *fiber.Ctx) error {
 		src.Close()
 		_, _, err = c.Client.From("product_images").Insert(map[string]interface{}{
 			"product_id": productID,
-			"images":     path,
+			"images":     fileName,
 			"created_at": time.Now(),
 			"created_by": "Testing",
 			"updated_at": time.Now(),
@@ -120,11 +120,6 @@ func (c *Controller) AddProduct(ctx *fiber.Ctx) error {
 		fmt.Println(path)
 	}
 
-	if err != nil {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrInternalServerError
-	}
-
 	return cons.ErrSuccess
 }
 
@@ -134,13 +129,20 @@ func (c *Controller) GetProduct(ctx *fiber.Ctx) error {
 	var products []entity.Products
 
 	_, err := c.Client.From("products").
-		Select("*, category(category_name)", "", false).
+		Select("*,product_images(images) ,category(category_name)", "", false).
 		ExecuteTo(&products)
 
-	fmt.Print(products)
 	if err != nil {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInternalServerError
+	}
+
+	cdnURL := os.Getenv("NEXT_PUBLIC_PATH_SUPABASE")
+
+	for i := range products {
+		for j := range products[i].ProductImages {
+			products[i].ProductImages[j].Images = cdnURL + products[i].ProductImages[j].Images
+		}
 	}
 
 	return util.GenerateResponse(ctx, http.StatusOK, "Success", products)
