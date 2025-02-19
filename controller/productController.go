@@ -9,7 +9,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os"
 	"strings"
 	"time"
 
@@ -127,23 +126,26 @@ func (c *Controller) GetProduct(ctx *fiber.Ctx) error {
 	FuncName := "GetProduct :"
 
 	var products []entity.Products
+	params := dto.RetrieveProductParameter{
+		SearchQuery: util.Ptr("Siobi"),
+	}
 
-	_, err := c.Client.From("products").
-		Select("*,product_images(images) ,category(category_name)", "", false).
-		ExecuteTo(&products)
+	resp := c.Client.Rpc("get_products_data", "", params)
+	err := json.Unmarshal([]byte(resp), &products)
 
 	if err != nil {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInternalServerError
 	}
+	// _, err := c.Client.From("get_products_data").Select("*", "", false).ExecuteTo(&products)
 
-	cdnURL := os.Getenv("NEXT_PUBLIC_PATH_SUPABASE")
+	// cdnURL := os.Getenv("NEXT_PUBLIC_PATH_SUPABASE")
 
-	for i := range products {
-		for j := range products[i].ProductImages {
-			products[i].ProductImages[j].Images = cdnURL + products[i].ProductImages[j].Images
-		}
-	}
+	// for i := range products {
+	// 	for j := range products[i].ProductImages {
+	// 		products[i].ProductImages[j].Images = cdnURL + products[i].ProductImages[j].Images
+	// 	}
+	// }
 
 	return util.GenerateResponse(ctx, http.StatusOK, "Success", products)
 }

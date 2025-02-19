@@ -5,7 +5,7 @@ type Category struct {
 }
 
 type ProductImages struct {
-	Images string `json:"images"`
+	Images string `json:"image_url"`
 }
 
 type Products struct {
@@ -14,8 +14,9 @@ type Products struct {
 	ProductStock       int64           `json:"product_stock"`
 	ProductPrice       int64           `json:"product_price"`
 	ProductCategoryID  int64           `json:"product_category_id"`
+	Discount           int64           `json:"discount"`
+	ProductDescription string          `json:"description"`
+	Created_by         string          `json:"created_by"`
 	ProductImages      []ProductImages `json:"product_images"`
 	Category           Category        `json:"category"`
-	ProductDescription string          `json:"description"`
-	Discount           int64           `json:"discount"`
 }

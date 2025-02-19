@@ -29,3 +29,12 @@ type UpdateProductRequest struct {
 type GetProductBySearch struct {
 	ProductName string `json:"product_name"`
 }
+
+type RetrieveProductParameter struct {
+	SearchQuery *string `json:"search_query,omitempty"`
+	MinPrice    *int    `json:"min_price,omitempty"`
+	MaxPrice    *int    `json:"max_price,omitempty"`
+	CategoryID  *int    `json:"category_id,omitempty"`
+	SortBy      *string `json:"sort_by,omitempty"`
+	Order       *string `json:"order,omitempty"`
+}

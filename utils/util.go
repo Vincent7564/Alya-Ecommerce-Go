@@ -191,7 +191,9 @@ func DecodeToken(tokenString string) (*jwt.MapClaims, error) {
 
 	return nil, fmt.Errorf("invalid Token")
 }
-
+func Ptr[T any](v T) *T {
+	return &v
+}
 func ImageUploader(fileBytes []byte, productName string) (string, error) {
 
 	supabaseURL := os.Getenv("NEXT_PUBLIC_SUPABASE_URL")
