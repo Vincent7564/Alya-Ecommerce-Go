@@ -8,8 +8,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
+	"mime/multipart"
 	"net/http"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -46,7 +48,7 @@ func (c *Controller) AddProduct(ctx *fiber.Ctx) error {
 		return cons.ErrValidationError
 	}
 
-	files := formData.File["product"] //Depends on key name
+	files := formData.File["product"]
 	var currentTime = time.Now()
 	var productID int
 	insertResult, _, err := c.Client.From("products").
@@ -80,43 +82,54 @@ func (c *Controller) AddProduct(ctx *fiber.Ctx) error {
 		return cons.ErrInternalServerError
 	}
 
+	var wg sync.WaitGroup
+	errChan := make(chan error, len(files))
+
 	for _, file := range files {
-		fmt.Println(file.Filename)
+		wg.Add(1)
 
-		src, err := file.Open()
+		go func(file *multipart.FileHeader) {
+			defer wg.Done()
+
+			src, err := file.Open()
+			if err != nil {
+				errChan <- err
+				return
+			}
+			defer src.Close()
+			fileBytes, err := io.ReadAll(src)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			fileName := fmt.Sprintf("%s_%s_%s", request.ProductName, time.Now().Format("2006-01-02_15-04-05"), file.Filename)
+			_, err = util.ImageUploader(fileBytes, fileName)
+			if err != nil {
+				errChan <- err
+				return
+			}
+			_, _, err = c.Client.From("product_images").Insert(map[string]interface{}{
+				"product_id": productID,
+				"images":     fileName,
+				"created_at": time.Now(),
+				"created_by": "Testing",
+				"updated_at": time.Now(),
+				"updated_by": "Testing",
+			}, false, "", "", "").Execute()
+
+			if err != nil {
+				errChan <- err
+				return
+			}
+		}(file)
+	}
+	wg.Wait()
+	close(errChan)
+	for err := range errChan {
 		if err != nil {
 			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 			return cons.ErrInternalServerError
 		}
-
-		fileBytes, err := io.ReadAll(src)
-		if err != nil {
-			return cons.ErrInternalServerError
-		}
-
-		fileName := fmt.Sprintf("%s_%s_%s", request.ProductName, time.Now().Format("2006-01-02_15-04-05"), file.Filename)
-
-		path, err := util.ImageUploader(fileBytes, fileName)
-
-		if err != nil {
-			return cons.ErrInternalServerError
-		}
-		src.Close()
-		_, _, err = c.Client.From("product_images").Insert(map[string]interface{}{
-			"product_id": productID,
-			"images":     fileName,
-			"created_at": time.Now(),
-			"created_by": "Testing",
-			"updated_at": time.Now(),
-			"updated_by": "Testing",
-		}, false, "", "", "").Execute()
-
-		if err != nil {
-			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-			return cons.ErrInternalServerError
-		}
-
-		fmt.Println(path)
 	}
 
 	return cons.ErrSuccess
