@@ -41,13 +41,22 @@ type ErrorResponse struct {
 var validate *validator.Validate
 
 func GenerateResponse(ctx *fiber.Ctx, statusCode int, respmsg string, result interface{}) error {
+	// Ensure that if `result` is already JSON, it is returned as-is
+	if resultMap, ok := result.(map[string]interface{}); ok {
+		return ctx.Status(statusCode).JSON(resultMap)
+	}
+
+	// Normal response
 	resp := Response{
 		Message:  respmsg,
 		Data:     result,
 		Paginate: nil,
 	}
 	return ctx.Status(statusCode).JSON(resp)
+}
 
+func GenerateResponseServices(ctx *fiber.Ctx, statusCode int, respmsg string, result interface{}) error {
+	return ctx.Status(statusCode).JSON(result)
 }
 
 func GenerateResponsePaginate(ctx *fiber.Ctx, statusCode int, respmsg string, result interface{}, paginate PaginateData) error {

@@ -6,15 +6,15 @@ import (
 	util "Alya-Ecommerce-Go/utils"
 	cons "Alya-Ecommerce-Go/utils/const"
 	"bytes"
-	"encoding/json"
 	"net/http"
+	"os"
 	"strings"
 	"text/template"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/golang-jwt/jwt/v5"
 	"github.com/rs/zerolog/log"
-	"github.com/valyala/fasthttp"
 )
 
 func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
@@ -87,42 +87,71 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 	var response dto.LoginResponse
 	FuncName := "Login"
 	err := ctx.BodyParser(&request)
+	log.Info().Msg("API Endpoint /" + FuncName + ":")
+	var getData entity.UserEntity
+
 	if err != nil {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName + ":")
 		return cons.ErrInvalidRequest
 	}
 
-	URL := "http://127.0.0.1:8020/auth/login"
-	requestBody := map[string]string{
-		"username": request.Username,
-		"password": request.Password,
-	}
-
-	reqBody, _ := json.Marshal(requestBody)
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-
-	req.SetRequestURI(URL)
-	req.Header.SetMethod("POST")
-	req.Header.SetContentType("application/json")
-	req.SetBody(reqBody)
-
-	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseResponse(resp)
-
-	client := fasthttp.Client{}
-	err = client.Do(req, resp)
-	if err != nil {
+	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrInternalServerError
+		for _, msg := range errorMessage {
+			log.Error().Msg("Validation error in API Endpoint /" + FuncName + ":" + msg)
+		}
+
+		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
+		return cons.ErrValidationError
 	}
 
-	err = json.Unmarshal(resp.Body(), &response)
+	_, err = c.Client.From("users").Select("*", "", false).Eq("username", request.Username).Single().ExecuteTo(&getData)
+
 	if err != nil {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrInternalServerError
+		log.Error().Err(err).Msg("API Endpoint /" + FuncName + ":")
+		return cons.ErrAccountNotFound
 	}
-	return util.GenerateResponse(ctx, http.StatusOK, "Success", response)
+
+	isTrue := util.CheckPasswordHash(request.Password, getData.Password)
+
+	if isTrue {
+		claims := jwt.MapClaims{
+			"username": getData.Username,
+			"email":    getData.Email,
+			"exp":      time.Now().Add(time.Hour * 12).Unix(),
+		}
+
+		token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+		secret_token := os.Getenv("SECRET_TOKEN")
+		t, err := token.SignedString([]byte(secret_token))
+
+		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName + ":")
+			return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrFailed+" to Sign Token", err)
+		}
+		timeNow := time.Now().UTC()
+		expiredTime := time.Now().Add(time.Hour * 12)
+		_, _, err = c.Client.From("users_token").Insert(map[string]interface{}{
+			"users_id":   getData.ID,
+			"token":      t,
+			"is_active":  true,
+			"created_at": timeNow,
+			"expires_at": expiredTime,
+		}, false, "", "", "").Execute()
+
+		if err != nil {
+			log.Error().Err(err).Msg("API Endpoint /" + FuncName + ": ")
+			return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to insert token", err)
+		}
+
+		response.Token = t
+		response.UserID = getData.ID
+		response.Username = getData.Username
+
+		return ctx.Status(http.StatusOK).JSON(response)
+	}
+	log.Error().Msg("API Endpoint /" + FuncName + ": ")
+	return cons.ErrIncorrectPassword
 }
 
 func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {

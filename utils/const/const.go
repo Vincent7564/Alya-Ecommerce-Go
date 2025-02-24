@@ -7,6 +7,7 @@ import (
 // Error Message
 var (
 	ErrInvalidRequest      = fiber.NewError(fiber.StatusBadRequest, "Invalid Request")
+	ErrTokenFailed         = fiber.NewError(fiber.StatusBadRequest, "Failed")
 	ErrDataExisted         = fiber.NewError(fiber.StatusBadGateway, "Data Existed")
 	ErrEmailExisted        = fiber.NewError(fiber.StatusBadGateway, "Email Existed")
 	ErrUsernameExisted     = fiber.NewError(fiber.StatusBadGateway, "Username Existed")
