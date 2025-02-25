@@ -14,7 +14,6 @@ import (
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/rs/zerolog/log"
-	"github.com/valyala/fasthttp"
 )
 
 func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
@@ -93,31 +92,14 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 	}
 
 	URL := "http://127.0.0.1:8020/auth/login"
-	requestBody := map[string]string{
-		"username": request.Username,
-		"password": request.Password,
-	}
+	respCode, resp := util.HitMicroservicesAPI(FuncName, URL, "POST", "application/json", request)
 
-	reqBody, _ := json.Marshal(requestBody)
-	req := fasthttp.AcquireRequest()
-	defer fasthttp.ReleaseRequest(req)
-
-	req.SetRequestURI(URL)
-	req.Header.SetMethod("POST")
-	req.Header.SetContentType("application/json")
-	req.SetBody(reqBody)
-
-	resp := fasthttp.AcquireResponse()
-	defer fasthttp.ReleaseResponse(resp)
-
-	client := fasthttp.Client{}
-	err = client.Do(req, resp)
-	if err != nil {
+	if respCode != 200 {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInternalServerError
 	}
 
-	err = json.Unmarshal(resp.Body(), &response)
+	err = json.Unmarshal(resp, &response)
 	if err != nil {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
 		return cons.ErrInternalServerError

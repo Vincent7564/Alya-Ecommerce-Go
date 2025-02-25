@@ -4,6 +4,7 @@ import (
 	"Alya-Ecommerce-Go/model/entity"
 	"crypto/rand"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"os"
@@ -232,4 +233,27 @@ func ImageUploader(fileBytes []byte, productName string) (string, error) {
 	}
 
 	return uploadURL, nil
+}
+
+func HitMicroservicesAPI(funcname, url, method, contenttype string, data interface{}) (int, []byte) {
+	reqBody, _ := json.Marshal(data)
+	req := fasthttp.AcquireRequest()
+	defer fasthttp.ReleaseRequest(req)
+
+	req.SetRequestURI(url)
+	req.Header.SetMethod(method)
+	req.Header.SetContentType(contenttype)
+	req.SetBody(reqBody)
+
+	resp := fasthttp.AcquireResponse()
+	defer fasthttp.ReleaseResponse(resp)
+
+	client := fasthttp.Client{}
+	err := client.Do(req, resp)
+	if err != nil {
+		log.Error().Err(err).Msg("API Endpoint /" + "Hit Microservice API / " + funcname)
+		return resp.StatusCode(), []byte(`{"error": "Failed to hit microservice API/"}` + funcname)
+	}
+
+	return resp.StatusCode(), resp.Body()
 }
