@@ -5,11 +5,9 @@ import (
 	"Alya-Ecommerce-Go/model/entity"
 	util "Alya-Ecommerce-Go/utils"
 	cons "Alya-Ecommerce-Go/utils/const"
-	"bytes"
 	"encoding/json"
 	"net/http"
 	"strings"
-	"text/template"
 	"time"
 
 	"github.com/gofiber/fiber/v2"
@@ -18,8 +16,7 @@ import (
 
 func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 	var user dto.InsertUserRequest
-	var getData entity.UserEntity
-	FuncName := "RegisterUser"
+	FuncName := "InsertUser"
 	err := ctx.BodyParser(&user)
 
 	if err != nil {
@@ -27,58 +24,15 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 		return cons.ErrInvalidRequest
 	}
 
-	_, err = c.Client.From("users").Select("*", "", false).Eq("email", user.Email).Single().ExecuteTo(&getData)
+	URL := "http://127.0.0.1:8020/auth/login"
+	respCode, _ := util.HitMicroservicesAPI(FuncName, URL, "POST", "application/json", user)
 
-	if err != nil {
+	if respCode != 200 {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrDataExisted
+		return cons.ErrInternalServerError
 	}
 
-	if getData.Email != "" {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrEmailExisted
-	}
-
-	_, err = c.Client.From("users").Select("*", "", false).Eq("username", user.Username).Single().ExecuteTo(&getData)
-
-	if err != nil {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrDataExisted
-	}
-
-	if getData.Username != "" {
-		log.Error().Msg("API Endpoint /" + FuncName)
-		return cons.ErrUsernameExisted
-	}
-
-	if errorMessage := util.ValidateData(&user); len(errorMessage) > 0 {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		for _, msg := range errorMessage {
-			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
-		}
-		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
-		return cons.ErrValidationError
-	}
-
-	hashPassword, _ := util.HashPassword(user.Password)
-
-	_, _, err = c.Client.From("users").Insert(map[string]interface{}{
-		"username":     user.Username,
-		"password":     string(hashPassword),
-		"full_name":    user.Name,
-		"email":        user.Email,
-		"phone_number": user.PhoneNumber,
-		"address":      user.Address,
-		"created_by":   user.Username,
-		"created_at":   time.Now(),
-	}, false, "", "", "").Execute()
-
-	if err != nil {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrFailed+" to insert user", err.Error())
-	}
-
-	return cons.ErrSuccess
+	return util.GenerateResponse(ctx, http.StatusOK, "Success", user.Email)
 }
 
 func (c *Controller) Login(ctx *fiber.Ctx) error {
@@ -109,12 +63,7 @@ func (c *Controller) Login(ctx *fiber.Ctx) error {
 
 func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 	var request dto.ForgotPasswordRequest
-	var getData entity.UserEntity
 	FuncName := "ForgotPassword"
-	type data struct {
-		Token       string
-		ExpiredDate string
-	}
 
 	err := ctx.BodyParser(&request)
 	if err != nil {
@@ -122,61 +71,15 @@ func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 		return cons.ErrInvalidRequest
 	}
 
-	if errorMessage := util.ValidateData(&request); len(errorMessage) > 0 {
+	URL := "http://127.0.0.1:8020/auth/forgot-password"
+	respCode, _ := util.HitMicroservicesAPI(FuncName, URL, "POST", "application/json", request)
+
+	if respCode != 200 {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		for _, msg := range errorMessage {
-			log.Error().Msg("Validation error in API Endpoint /" + FuncName + msg)
-		}
-		cons.ErrValidationError.Message += ": " + strings.Join(errorMessage, "; ")
-		return cons.ErrValidationError
+		return cons.ErrInternalServerError
 	}
 
-	count, err := c.Client.From("users").Select("*", "", false).Eq("email", request.Email).Single().ExecuteTo(&getData)
-
-	if err != nil && count == 0 {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrAccountNotFound
-	}
-
-	if token, err := util.GenerateRandomToken(); err != nil {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return util.GenerateResponse(ctx, http.StatusInternalServerError, cons.ErrFailed+" to generate token", err.Error())
-	} else {
-		d := data{}
-		var tempTime = time.Now().Add(time.Minute * 30)
-		d.Token = token
-		d.ExpiredDate = tempTime.Format("03:04PM 2 January 2006")
-
-		_, _, err = c.Client.From("reset_password_tokens").Insert(map[string]interface{}{
-			"users_id":             getData.ID,
-			"email":                getData.Email,
-			"reset_password_token": d.Token,
-			"created_at":           time.Now(),
-			"expired_at":           d.ExpiredDate,
-		}, false, "", "", "").Execute()
-
-		if err != nil {
-			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-			return util.GenerateResponse(ctx, http.StatusBadGateway, cons.ErrFailed+" to insert token", err.Error())
-		}
-
-		tmpl, err := template.ParseFiles("utils/ForgotPassword.html")
-
-		if err != nil {
-			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-			return util.GenerateResponse(ctx, http.StatusFailedDependency, cons.ErrFailed+" Parse Template", err.Error())
-		}
-
-		var body bytes.Buffer
-		if err := tmpl.Execute(&body, d); err != nil {
-			log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-			return util.GenerateResponse(ctx, http.StatusFailedDependency, cons.ErrFailed+" to execute template", err.Error())
-		}
-
-		util.SendEmail(getData.Email, "Forget password email for Alya Ecommerce Shop", body.String())
-
-		return util.GenerateResponse(ctx, http.StatusOK, "Success", "")
-	}
+	return util.GenerateResponse(ctx, http.StatusOK, "Success", "Email sent succesfully")
 }
 
 func (c *Controller) CheckForgotPasswordToken(ctx *fiber.Ctx) error {

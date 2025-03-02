@@ -222,7 +222,7 @@ func (c *Controller) ForgotPassword(ctx *fiber.Ctx) error {
 
 		util.SendEmail(getData.Email, "Forget password email for Alya Ecommerce Shop", body.String())
 
-		return util.GenerateResponse(ctx, http.StatusOK, "Success", "")
+		return ctx.Status(http.StatusOK).JSON(request)
 	}
 }
 
