@@ -6,6 +6,7 @@ import (
 	util "Alya-Ecommerce-Go/utils"
 	cons "Alya-Ecommerce-Go/utils/const"
 	"bytes"
+	"fmt"
 	"net/http"
 	"os"
 	"strings"
@@ -20,7 +21,7 @@ import (
 func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 	var user dto.InsertUserRequest
 	var getData entity.UserEntity
-	FuncName := "RegisterUser"
+	FuncName := "InsertUser"
 	err := ctx.BodyParser(&user)
 
 	if err != nil {
@@ -28,27 +29,29 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 		return cons.ErrInvalidRequest
 	}
 
-	_, err = c.Client.From("users").Select("*", "", false).Eq("email", user.Email).Single().ExecuteTo(&getData)
+	count, _ := c.Client.From("users").Select("*", "", false).Eq("email", user.Email).Single().ExecuteTo(&getData)
 
-	if err != nil {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrDataExisted
-	}
+	fmt.Print(count)
 
 	if getData.Email != "" {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+		log.Error().Msg("User with email requested already exists")
 		return cons.ErrEmailExisted
 	}
 
-	_, err = c.Client.From("users").Select("*", "", false).Eq("username", user.Username).Single().ExecuteTo(&getData)
+	if count != 0 {
+		log.Error().Msg("User with email requested already exists")
+		return cons.ErrDataExisted
+	}
 
-	if err != nil {
-		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
+	count, _ = c.Client.From("users").Select("*", "", false).Eq("username", user.Username).Single().ExecuteTo(&getData)
+
+	if count != 0 {
+		log.Error().Msg("User with email requested already exists")
 		return cons.ErrDataExisted
 	}
 
 	if getData.Username != "" {
-		log.Error().Msg("API Endpoint /" + FuncName)
+		log.Error().Msg("User with username requested already exists")
 		return cons.ErrUsernameExisted
 	}
 

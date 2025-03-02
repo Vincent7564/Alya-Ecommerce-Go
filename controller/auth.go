@@ -24,12 +24,12 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 		return cons.ErrInvalidRequest
 	}
 
-	URL := "http://127.0.0.1:8020/auth/login"
+	URL := "http://127.0.0.1:8020/auth/register"
 	respCode, _ := util.HitMicroservicesAPI(FuncName, URL, "POST", "application/json", user)
 
 	if respCode != 200 {
 		log.Error().Err(err).Msg("API Endpoint /" + FuncName)
-		return cons.ErrInternalServerError
+		return util.GenerateResponseServices(ctx, http.StatusInternalServerError, "Failed", err)
 	}
 
 	return util.GenerateResponse(ctx, http.StatusOK, "Success", user.Email)
