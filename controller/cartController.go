@@ -113,7 +113,7 @@ func (c *Controller) UpdateCart(ctx *fiber.Ctx) error {
 	return cons.ErrSuccess
 }
 
-func (c *Controller) UploadImageTest(ctx *fiber.Ctx) error {
+func (c *Controller) UploadImage(ctx *fiber.Ctx) error {
 	FuncName := "UploadImageTest :"
 
 	formData, err := ctx.MultipartForm()

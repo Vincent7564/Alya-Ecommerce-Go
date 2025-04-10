@@ -13,5 +13,5 @@ func CartRoutes(app *fiber.App, controller controller.Controller) {
 	CartRoutes.Post("", controller.AddCart)
 	CartRoutes.Get("/:id", controller.GetCart)
 	CartRoutes.Delete("/:id", controller.DeleteCartItem)
-	CartRoutes.Post("/upload", controller.UploadImageTest)
+	CartRoutes.Post("/upload", controller.UploadImage)
 }

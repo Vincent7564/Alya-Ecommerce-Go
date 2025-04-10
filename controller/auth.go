@@ -36,6 +36,7 @@ func (c *Controller) InsertUser(ctx *fiber.Ctx) error {
 }
 
 func (c *Controller) Login(ctx *fiber.Ctx) error {
+	//
 	var request dto.LoginRequest
 	var response dto.LoginResponse
 	FuncName := "Login"
