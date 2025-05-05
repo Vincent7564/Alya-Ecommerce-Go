@@ -40,6 +40,8 @@ func (c *Controller) AddEvent(ctx *fiber.Ctx) error {
 		"is_active":      request.IsActive,
 		"created_at":     time.Now(),
 		"created_by":     "API",
+		"updated_at":     time.Now(),
+		"updated_by":     "API",
 	}, false, "", "", "").Execute()
 
 	if err != nil {

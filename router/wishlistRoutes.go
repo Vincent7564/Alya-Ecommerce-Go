@@ -11,6 +11,6 @@ func WishlistRoutes(app *fiber.App, controller controller.Controller) {
 	WishlistRoutes := app.Group("/wishlist", middleware.ValidateTokenMiddleware(controller.Client))
 
 	WishlistRoutes.Post("", controller.AddWishlist)
-	WishlistRoutes.Get("", controller.GetWishlist)
+	WishlistRoutes.Get("/:id", controller.GetWishlist)
 	WishlistRoutes.Delete("/:id", controller.DeleteWishlist)
 }
